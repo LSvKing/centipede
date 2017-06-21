@@ -1,0 +1,45 @@
+{
+    "memo": "4feba8fec14392a9e0e3e82abdeb4a11b8d65076b2dad1170da0256186462ca6",
+    "projects": [
+        {
+            "name": "github.com/op/go-logging",
+            "branch": "master",
+            "revision": "970db520ece77730c7e4724c61121037378659d9",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "go.uber.org/atomic",
+            "version": "v1.0.0",
+            "revision": "870163a1121a1f54715c3467899c302aadd1f9ac",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "go.uber.org/zap",
+            "branch": "master",
+            "revision": "d0f04d90ba7d8656474811feff10a4023f80e74a",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/net",
+            "branch": "master",
+            "revision": "d379faa25cbdc04d653984913a2ceb43b0bc46d7",
+            "packages": [
+                "context"
+            ]
+        },
+        {
+            "name": "golang.org/x/time",
+            "branch": "master",
+            "revision": "f51c12702a4d776e4c1fa9b0fabab841babae631",
+            "packages": [
+                "rate"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,74 @@
+hash: b458f773f8a531e53760e0202d5aabdda272c00959abe711d6d89fdecc695789
+updated: 2017-06-20T17:29:21.262819352+08:00
+imports:
+- name: github.com/andybalholm/cascadia
+  version: 349dd0209470eabd9514242c688c403c0926d266
+- name: github.com/bitly/go-simplejson
+  version: aabad6e819789e569bd6aabf444c935aa9ba1e44
+- name: github.com/BurntSushi/toml
+  version: b26d9c308763d68093482582cea63d69be07a0f0
+- name: github.com/davecgh/go-spew
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  subpackages:
+  - spew
+- name: github.com/fatih/camelcase
+  version: f6a740d52f961c60348ebb109adde9f4635d7540
+- name: github.com/fatih/structs
+  version: a720dfa8df582c51dee1b36feabb906bde1588bd
+- name: github.com/go-redis/redis
+  version: e14976b254c5bc5f399dd0ae9314b1d02a176897
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
+- name: github.com/jaytaylor/html2text
+  version: 7c7a33a7a158a5ce395c803d2b6a209b2bbc14c8
+- name: github.com/koding/multiconfig
+  version: a7d0848fc58bf20f330c06b1704b354efb8d6b16
+- name: github.com/parnurzeal/gorequest
+  version: a578a48e8d6ca8b01a3b18314c43c6716bb5f5a3
+- name: github.com/PuerkitoBio/goquery
+  version: e1271ee34c6a305e38566ecd27ae374944907ee9
+- name: github.com/sirupsen/logrus
+  version: 68cec9f21fbf3ea8d8f98c044bc6ce05f17b267a
+- name: github.com/tidwall/gjson
+  version: c784c417818f59d6597274642d8ac1d09efc9b01
+- name: github.com/tidwall/match
+  version: 173748da739a410c5b0b813b956f89ff94730b4c
+- name: github.com/weekface/mgorus
+  version: 83720e22971a8301c5b2738c9364accd3d9eb13a
+- name: go4.org
+  version: 034d17a462f7b2dcd1a4a73553ec5357ff6e6c6e
+  subpackages:
+  - syncutil
+- name: golang.org/x/net
+  version: 2497afe528999a59ebf56c8b8fb6191e4dcde594
+  subpackages:
+  - context
+  - html
+  - html/atom
+- name: golang.org/x/sys
+  version: b90f89a1e7a9c1f6b918820b3daa7f08488c8594
+  subpackages:
+  - unix
+- name: golang.org/x/time
+  version: f51c12702a4d776e4c1fa9b0fabab841babae631
+  subpackages:
+  - rate
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
+- name: upper.io/db.v3
+  version: 0b0d44b4ae0ffc247d9f83241867465da93a1e50
+  subpackages:
+  - internal/immutable
+  - mongo
+testImports: []

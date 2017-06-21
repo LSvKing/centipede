@@ -1,0 +1,23 @@
+package items
+
+import (
+	"golang.org/x/time/rate"
+)
+
+type CrawlerEr interface {
+	Parse()
+	Option() Crawler
+	Pipeline(data DataRow)
+}
+
+type Crawler struct {
+	Name         string
+	Limit        rate.Limit
+	Thread       uint
+	DisableProxy bool
+	ProxyList    []Proxy
+}
+
+func (crawler Crawler) Register() Crawler {
+	return crawler
+}
