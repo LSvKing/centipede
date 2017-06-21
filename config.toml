@@ -1,16 +1,11 @@
-title = "Golang spider"
+title = "Centipede"
 
 [Mongo]
-Host = "10.1.72.26"
+Host = "127.0.0.1"
 Post = "27017"
-Database = "douban"
+Database = "centipede"
 
 [HttpClient]
-#ProxyDisable = false
-#ProxyHost = "proxy.abuyun.com"
-#ProxyPort = "9020"
-#ProxyUser = "HR03Y5983TE1C0MD"
-#ProxyPassword = "72DAB06BEF59368F"
 ProxyDisable = true
 ProxyHost = "127.0.0.1"
 ProxyPort = "8878"
@@ -18,5 +13,5 @@ ProxyUser = ""
 ProxyPassword = ""
 
 [Redis]
-Host = "10.1.72.26:6379"
+Host = "127.0.0.1:6379"
 Db = 0

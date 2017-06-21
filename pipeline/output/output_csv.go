@@ -1,10 +1,10 @@
 package output
 
 import (
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/logs"
 	"encoding/csv"
 	"fmt"
+	"github.com/LSvKing/centipede/items"
+	"github.com/LSvKing/centipede/logs"
 	"os"
 )
 

@@ -12,6 +12,7 @@ gradle-app.setting
 build.gradle
 gradlew
 manifest.json
+gradle
 
 # Cache of project
 .gradletasknamecache

@@ -1,10 +1,10 @@
 package scheduler
 
 import (
+	"encoding/json"
 	"github.com/LSvKing/centipede/config"
 	"github.com/LSvKing/centipede/logs"
 	"github.com/LSvKing/centipede/request"
-	"encoding/json"
 	"github.com/go-redis/redis"
 	"sync"
 )

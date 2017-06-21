@@ -1,9 +1,9 @@
 package crawler
 
 import (
+	"fmt"
 	"github.com/LSvKing/centipede/centipede"
 	"github.com/LSvKing/centipede/items"
-	"fmt"
 )
 
 type TestCrawler struct {
