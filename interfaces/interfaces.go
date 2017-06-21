@@ -1,8 +1,8 @@
 package interfaces
 
 import (
-	"douban_spider/items"
-	"douban_spider/pipeline"
+	"github.com/LSvKing/centipede/items"
+	"github.com/LSvKing/centipede/pipeline"
 )
 
 type Spider interface {

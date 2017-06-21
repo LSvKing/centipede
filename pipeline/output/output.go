@@ -1,6 +1,6 @@
 package output
 
-import "douban_spider/items"
+import "github.com/LSvKing/centipede/items"
 
 type Output interface {
 	OutPut(cache items.DataCache)

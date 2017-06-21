@@ -1,8 +1,8 @@
 package pipeline
 
 import (
-	"douban_spider/items"
-	"douban_spider/logs"
+	"github.com/LSvKing/centipede/items"
+	"github.com/LSvKing/centipede/logs"
 	"io"
 	"os"
 	"sync"

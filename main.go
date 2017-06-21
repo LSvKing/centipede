@@ -1,8 +1,8 @@
 package main
 
 import (
-	"douban_spider/centipede"
-	_ "douban_spider/crawler"
+	"github.com/LSvKing/centipede/centipede"
+	_ "github.com/LSvKing/centipede/crawler"
 )
 
 func main() {

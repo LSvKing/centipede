@@ -1,8 +1,8 @@
 package crawler
 
 import (
-	"douban_spider/centipede"
-	"douban_spider/items"
+	"github.com/LSvKing/centipede/centipede"
+	"github.com/LSvKing/centipede/items"
 	"fmt"
 )
 

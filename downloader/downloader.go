@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"douban_spider/config"
-	"douban_spider/logs"
-	"douban_spider/request"
+	"github.com/LSvKing/centipede/config"
+	"github.com/LSvKing/centipede/logs"
+	"github.com/LSvKing/centipede/request"
 )
 
 var log = logs.New()

@@ -1,7 +1,7 @@
 package logs
 
 import (
-	"douban_spider/config"
+	"github.com/LSvKing/centipede/config"
 	"github.com/sirupsen/logrus"
 	"github.com/weekface/mgorus"
 )

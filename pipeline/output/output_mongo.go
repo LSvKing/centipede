@@ -1,8 +1,8 @@
 package output
 
 import (
-	"douban_spider/config"
-	"douban_spider/items"
+	"github.com/LSvKing/centipede/config"
+	"github.com/LSvKing/centipede/items"
 	"upper.io/db.v3"
 	"upper.io/db.v3/mongo"
 	//"fmt"

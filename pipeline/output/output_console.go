@@ -1,7 +1,7 @@
 package output
 
 import (
-	"douban_spider/items"
+	"github.com/LSvKing/centipede/items"
 	"fmt"
 )
 

@@ -15,14 +15,14 @@ import (
 	"sync"
 	"time"
 
-	"douban_spider/common"
-	"douban_spider/downloader"
-	"douban_spider/items"
-	"douban_spider/logs"
-	"douban_spider/pipeline"
-	"douban_spider/request"
-	"douban_spider/resource_manage"
-	"douban_spider/scheduler"
+	"github.com/LSvKing/centipede/common"
+	"github.com/LSvKing/centipede/downloader"
+	"github.com/LSvKing/centipede/items"
+	"github.com/LSvKing/centipede/logs"
+	"github.com/LSvKing/centipede/pipeline"
+	"github.com/LSvKing/centipede/request"
+	"github.com/LSvKing/centipede/resource_manage"
+	"github.com/LSvKing/centipede/scheduler"
 )
 
 type Centipede struct {
