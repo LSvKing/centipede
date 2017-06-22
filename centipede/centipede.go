@@ -30,7 +30,8 @@ type Centipede struct {
 	Downloader *downloader.Downloader
 	Pipeline   *pipeline.Pipeline
 	Limit      rate.Limit //每秒并发次数
-	Crawlers   []items.CrawlerEr
+	Crawlers   map[string]items.CrawlerEr
+	CrawlerJob chan items.CrawlerEr
 }
 
 var (
@@ -38,6 +39,8 @@ var (
 		Scheduler:  scheduler.New(),
 		Downloader: downloader.New(),
 		Pipeline:   pipeline.New(),
+		Crawlers:make(map[string]items.CrawlerEr),
+		CrawlerJob : make(chan items.CrawlerEr),
 	}
 
 	log = logs.New()
@@ -189,13 +192,24 @@ func Run() {
 
 }
 
+func (centipede Centipede) Run(){
+	//c := centipede.Crawlers[0]
+	//
+	//centipede.CrawlerJob <- c
+}
+
 func AddCrawler(crawler items.CrawlerEr) {
-	centipede.Crawlers = append(centipede.Crawlers, crawler)
+	centipede.Crawlers[crawler.Option().Name] = crawler
 }
 
 // AddRequest 添加请求
 func AddRequest(req *request.Request) {
 	centipede.Scheduler.Push(req)
+}
+
+// AddCrawlerChan 加入爬虫到通道中
+func AddCrawlerChan(crawlerName string){
+	centipede.CrawlerJob <- centipede.Crawlers[crawlerName]
 }
 
 // AddData 添加数据

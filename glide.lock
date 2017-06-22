@@ -1,8 +1,10 @@
-hash: b458f773f8a531e53760e0202d5aabdda272c00959abe711d6d89fdecc695789
-updated: 2017-06-20T17:29:21.262819352+08:00
+hash: ba38256f3b13aa855214f420b23d80adea7166a426a3480df87ec97fe8931b8d
+updated: 2017-06-22T15:46:07.493803421+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
+- name: github.com/bamzi/jobrunner
+  version: 273175f8b6ebabab8a639a4e6260a5c50fbf016a
 - name: github.com/bitly/go-simplejson
   version: aabad6e819789e569bd6aabf444c935aa9ba1e44
 - name: github.com/BurntSushi/toml
@@ -23,10 +25,14 @@ imports:
   - internal/hashtag
   - internal/pool
   - internal/proto
+- name: github.com/jakecoffman/cron
+  version: 483223747f6b728cfe1b327fe05b2fa4dd456b27
 - name: github.com/jaytaylor/html2text
   version: 7c7a33a7a158a5ce395c803d2b6a209b2bbc14c8
 - name: github.com/koding/multiconfig
   version: a7d0848fc58bf20f330c06b1704b354efb8d6b16
+- name: github.com/LSvKing/cron
+  version: 57ac9950da80b6e2c12df9042429278cf8c729eb
 - name: github.com/parnurzeal/gorequest
   version: a578a48e8d6ca8b01a3b18314c43c6716bb5f5a3
 - name: github.com/PuerkitoBio/goquery
@@ -35,8 +41,6 @@ imports:
   version: 68cec9f21fbf3ea8d8f98c044bc6ce05f17b267a
 - name: github.com/tidwall/gjson
   version: c784c417818f59d6597274642d8ac1d09efc9b01
-- name: github.com/tidwall/match
-  version: 173748da739a410c5b0b813b956f89ff94730b4c
 - name: github.com/weekface/mgorus
   version: 83720e22971a8301c5b2738c9364accd3d9eb13a
 - name: go4.org
@@ -64,6 +68,8 @@ imports:
   - internal/json
   - internal/sasl
   - internal/scram
+- name: gopkg.in/robfig/cron.v2
+  version: be2e0b0deed5a68ffee390b4583a13aff8321535
 - name: gopkg.in/yaml.v2
   version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 - name: upper.io/db.v3

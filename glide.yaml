@@ -1,4 +1,4 @@
-package: douban_spider
+package: centipede
 import:
 - package: github.com/PuerkitoBio/goquery
   version: ^1.1.0
@@ -19,3 +19,6 @@ import:
 - package: github.com/tidwall/gjson
 - package: github.com/bitly/go-simplejson
   version: ^0.5.0
+- package: github.com/bamzi/jobrunner
+- package: github.com/LSvKing/cron
+  version: ^2.0.0

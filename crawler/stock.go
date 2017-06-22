@@ -137,7 +137,7 @@ func (stock *Stock) GetStock(response *http.Response) {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
 
-	collection := mongo.Collection("stock_list")
+	collection := mongo.Collection("stock_list2")
 
 	if r.Error_code == 0 {
 
