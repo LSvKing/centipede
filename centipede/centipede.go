@@ -313,3 +313,12 @@ func SetCookieString(rawUrl string, cookie string) {
 
 	centipede.Downloader.Client.Jar.SetCookies(u, cookies)
 }
+
+func PushCrawler(crawler string)  {
+
+	if c,ok := centipede.Crawlers[crawler]; ok{
+		centipede.CrawlerJob <- c
+	}else{
+		log.Error(crawler ,"爬虫脚本不存在")
+	}
+}

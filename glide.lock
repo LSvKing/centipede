@@ -1,5 +1,5 @@
-hash: ba38256f3b13aa855214f420b23d80adea7166a426a3480df87ec97fe8931b8d
-updated: 2017-06-22T15:46:07.493803421+08:00
+hash: f54a9beef77ca05c20b36f0311955c0c07d621f2a2b0c9ac53b03bb0f2d1b492
+updated: 2017-06-30T17:51:55.194336457+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -18,21 +18,23 @@ imports:
 - name: github.com/fatih/structs
   version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/go-redis/redis
-  version: e14976b254c5bc5f399dd0ae9314b1d02a176897
+  version: b52814fa179a2f8e7f13d497c6ab40aba58ad773
   subpackages:
   - internal
   - internal/consistenthash
   - internal/hashtag
   - internal/pool
   - internal/proto
-- name: github.com/jakecoffman/cron
-  version: 483223747f6b728cfe1b327fe05b2fa4dd456b27
 - name: github.com/jaytaylor/html2text
   version: 7c7a33a7a158a5ce395c803d2b6a209b2bbc14c8
+- name: github.com/jcelliott/lumber
+  version: dd349441af25132d146d7095c6693a15431fc9b1
 - name: github.com/koding/multiconfig
   version: a7d0848fc58bf20f330c06b1704b354efb8d6b16
 - name: github.com/LSvKing/cron
   version: 57ac9950da80b6e2c12df9042429278cf8c729eb
+- name: github.com/nanobox-io/golang-scribble
+  version: da3a159a462297745592fd615d4bcebec94b54c6
 - name: github.com/parnurzeal/gorequest
   version: a578a48e8d6ca8b01a3b18314c43c6716bb5f5a3
 - name: github.com/PuerkitoBio/goquery
@@ -68,8 +70,6 @@ imports:
   - internal/json
   - internal/sasl
   - internal/scram
-- name: gopkg.in/robfig/cron.v2
-  version: be2e0b0deed5a68ffee390b4583a13aff8321535
 - name: gopkg.in/yaml.v2
   version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 - name: upper.io/db.v3
