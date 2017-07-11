@@ -50,16 +50,16 @@ type StockList struct {
 }
 
 func init() {
-	stock := Stock{
-		items.Crawler{
-			Name:         "股票",
-			Limit:        5,
-			Thread:       10,
-			DisableProxy: false,
-		},
-	}
-
-	centipede.AddCrawler(&stock)
+	//stock := Stock{
+	//	items.Crawler{
+	//		Name:         "股票",
+	//		Limit:        5,
+	//		Thread:       10,
+	//		DisableProxy: false,
+	//	},
+	//}
+	//
+	//centipede.AddCrawler(&stock)
 }
 
 func (stock *Stock) Parse() {
@@ -80,7 +80,7 @@ func (stock *Stock) StockCodeList(response *http.Response) {
 	responseData, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
-		log.Fatal(err)
+		centipede.Log.Fatal(err)
 	}
 
 	var r StockList
@@ -117,7 +117,7 @@ func (stock *Stock) StockCodeList(response *http.Response) {
 func (stock *Stock) GetStock(response *http.Response) {
 	responseData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		centipede.Log.Fatal(err)
 	}
 
 	var r StockList
@@ -134,7 +134,7 @@ func (stock *Stock) GetStock(response *http.Response) {
 	mongo, err := mongo.Open(settings)
 
 	if err != nil {
-		log.Fatalf("db.Open(): %q\n", err)
+		centipede.Log.Fatalf("db.Open(): %q\n", err)
 	}
 
 	collection := mongo.Collection("stock_list2")

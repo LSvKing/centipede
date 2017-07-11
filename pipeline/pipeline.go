@@ -1,12 +1,13 @@
 package pipeline
 
 import (
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/logs"
 	"io"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/LSvKing/centipede/items"
+	"github.com/LSvKing/centipede/logs"
 )
 
 var log = logs.New()
@@ -47,8 +48,6 @@ func (pipeline *Pipeline) AddData(data items.Data, collection string) {
 
 	data = append(data, times)
 
-	log.Debug(data)
-
 	pipeline.DataChan <- items.DataRow{
 		collection,
 		data,
@@ -68,98 +67,100 @@ func New() *Pipeline {
 
 func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 
+	log.Debugln(crawler.Option().Name, "Pipeline Run")
+
 	//dataCache := make(items.DataCache,0,pipeline.CacheSize)
 
+	//go func() {
 	go func() {
-		go func() {
-			defer func() {
-				if err := recover(); err != nil {
-					log.Errorf("err")
-				}
-
-			}()
-
-			for data := range pipeline.DataChan {
-
-				//dataCache = append(dataCache,data)
-				//
-				//if len(dataCache) < pipeline.CacheSize{
-				//	continue
-				//}
-				//
-				//pipeline.OutPut.OutPut(dataCache)
-				//
-				//dataCache = dataCache[:0]
-
-				crawler.Pipeline(data)
+		defer func() {
+			if err := recover(); err != nil {
+				log.Errorf("err")
 			}
 
 		}()
 
-		go func() {
+		for data := range pipeline.DataChan {
 
-			log.Debug("pipeline.FileChan:", len(pipeline.FileChan))
+			//dataCache = append(dataCache,data)
+			//
+			//if len(dataCache) < pipeline.CacheSize{
+			//	continue
+			//}
+			//
+			//pipeline.OutPut.OutPut(dataCache)
+			//
+			//dataCache = dataCache[:0]
 
-			var wait sync.WaitGroup
+			crawler.Pipeline(data)
+		}
 
-			for file := range pipeline.FileChan {
+	}()
 
-				wait.Add(1)
-				go func() {
+	go func() {
 
-					defer func() {
-						file.Response.Body.Close()
-						wait.Done()
-					}()
+		log.Debug("pipeline.FileChan:", len(pipeline.FileChan))
 
-					d, err := os.Stat(fileOutPath + file.Path)
+		var wait sync.WaitGroup
 
-					if err != nil || !d.IsDir() {
-						if err := os.MkdirAll(fileOutPath+file.Path, 0777); err != nil {
-							//logs.Log.Error(
-							//	" *     Fail  [文件下载：%v | KEYIN：%v | 批次：%v]   %v [ERROR]  %v\n",
-							//	self.Spider.GetName(), self.Spider.GetKeyin(), atomic.LoadUint64(&self.fileBatch), fileName, err,
-							//)
+		for file := range pipeline.FileChan {
 
-							log.Error("[创建目录]", err)
-							return
-						}
-					}
+			wait.Add(1)
+			go func() {
 
-					// 文件不存在就以0777的权限创建文件，如果存在就在写入之前清空内容
-					f, err := os.OpenFile(fileOutPath+file.Path+"/"+file.FileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
-					if err != nil {
+				defer func() {
+					file.Response.Body.Close()
+					wait.Done()
+				}()
+
+				d, err := os.Stat(fileOutPath + file.Path)
+
+				if err != nil || !d.IsDir() {
+					if err := os.MkdirAll(fileOutPath+file.Path, 0777); err != nil {
 						//logs.Log.Error(
 						//	" *     Fail  [文件下载：%v | KEYIN：%v | 批次：%v]   %v [ERROR]  %v\n",
 						//	self.Spider.GetName(), self.Spider.GetKeyin(), atomic.LoadUint64(&self.fileBatch), fileName, err,
 						//)
-						log.Error("[文件下载]", err)
+
+						log.Error("[创建目录]", err)
 						return
 					}
+				}
 
-					//log.Debugf("存储时: %p",&file.Body,file.Body.ContentLength)
-					size, err := io.Copy(f, file.Response.Body)
+				// 文件不存在就以0777的权限创建文件，如果存在就在写入之前清空内容
+				f, err := os.OpenFile(fileOutPath+file.Path+"/"+file.FileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
+				if err != nil {
+					//logs.Log.Error(
+					//	" *     Fail  [文件下载：%v | KEYIN：%v | 批次：%v]   %v [ERROR]  %v\n",
+					//	self.Spider.GetName(), self.Spider.GetKeyin(), atomic.LoadUint64(&self.fileBatch), fileName, err,
+					//)
+					log.Error("[文件下载]", err)
+					return
+				}
 
-					log.Debug(file.FileName, "Size:", size)
+				//log.Debugf("存储时: %p",&file.Body,file.Body.ContentLength)
+				size, err := io.Copy(f, file.Response.Body)
 
-					if err != nil {
-						//logs.Log.Error(
-						//	" *     Fail  [文件下载：%v | KEYIN：%v | 批次：%v]   %v (%s) [ERROR]  %v\n",
-						//	self.Spider.GetName(), self.Spider.GetKeyin(), atomic.LoadUint64(&self.fileBatch), fileName, bytesSize.Format(uint64(size)), err,
-						//)
+				log.Debug(file.FileName, "Size:", size)
 
-						log.Error(err)
-						return
-					}
-				}()
+				if err != nil {
+					//logs.Log.Error(
+					//	" *     Fail  [文件下载：%v | KEYIN：%v | 批次：%v]   %v (%s) [ERROR]  %v\n",
+					//	self.Spider.GetName(), self.Spider.GetKeyin(), atomic.LoadUint64(&self.fileBatch), fileName, bytesSize.Format(uint64(size)), err,
+					//)
 
-				wait.Wait()
-			}
+					log.Error(err)
+					return
+				}
+			}()
 
-		}()
+			wait.Wait()
+		}
 
-		<-pipeline.DataChan
-		<-pipeline.FileChan
 	}()
+
+	<-pipeline.DataChan
+	<-pipeline.FileChan
+	//}()
 
 }

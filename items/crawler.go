@@ -5,7 +5,7 @@ import (
 )
 
 type CrawlerEr interface {
-	Parse()
+	Parse(map[string]string)
 	Option() Crawler
 	Pipeline(data DataRow)
 }
@@ -20,4 +20,9 @@ type Crawler struct {
 
 func (crawler Crawler) Register() Crawler {
 	return crawler
+}
+
+type CrawlerChan struct {
+	CrawlerEr
+	Params map[string]string
 }

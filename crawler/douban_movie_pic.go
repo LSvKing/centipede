@@ -9,7 +9,6 @@ import (
 	"github.com/LSvKing/centipede/centipede"
 	"github.com/LSvKing/centipede/config"
 	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/logs"
 	"github.com/LSvKing/centipede/request"
 
 	"github.com/PuerkitoBio/goquery"
@@ -19,8 +18,6 @@ import (
 type DouBanMoviePic struct {
 	items.Crawler
 }
-
-var log = logs.New()
 
 func init() {
 
@@ -89,7 +86,7 @@ func parseUrl() {
 	mongo, err := mongo.Open(settings)
 
 	if err != nil {
-		log.Fatalf("db.Open(): %q\n", err)
+		centipede.Log.Fatalf("db.Open(): %q\n", err)
 	}
 
 	collection := mongo.Collection("movie")
@@ -125,7 +122,7 @@ func (this *DouBanMoviePic) ParseImageList(response *http.Response) {
 	doc, err := goquery.NewDocumentFromResponse(response)
 
 	if err != nil {
-		log.Error("FromResponse失败", response.Request.URL.String())
+		centipede.Log.Error("FromResponse失败", response.Request.URL.String())
 	}
 
 	url := response.Request.URL.String()
@@ -135,7 +132,7 @@ func (this *DouBanMoviePic) ParseImageList(response *http.Response) {
 	if exist {
 		totalNum, _ := strconv.Atoi(total)
 
-		log.Debugln("totalNum", totalNum)
+		centipede.Log.Debugln("totalNum", totalNum)
 
 		for i := 0; i < totalNum; i += 1 {
 			start := strconv.Itoa(i * 40)
@@ -163,7 +160,7 @@ func (this *DouBanMoviePic) ParseImage(response *http.Response) {
 	doc, err := goquery.NewDocumentFromResponse(response)
 
 	if err != nil {
-		log.Error("FromResponse失败", response.Request.URL.String())
+		centipede.Log.Error("FromResponse失败", response.Request.URL.String())
 	}
 
 	doc.Find(".article").Find("ul li").Each(func(i int, s *goquery.Selection) {
@@ -187,7 +184,7 @@ func (this *DouBanMoviePic) DownLoadImage(response *http.Response) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			log.Errorf("err")
+			centipede.Log.Errorf("err")
 		}
 	}()
 

@@ -2,11 +2,12 @@ package scheduler
 
 import (
 	"encoding/json"
+	"sync"
+
 	"github.com/LSvKing/centipede/config"
 	"github.com/LSvKing/centipede/logs"
 	"github.com/LSvKing/centipede/request"
 	"github.com/go-redis/redis"
-	"sync"
 )
 
 type Scheduler struct {

@@ -73,6 +73,10 @@ func Add(job Job) {
 		fmt.Println(err)
 	}
 
+	job.Job = func() {
+		centipede.PushCrawler(job.Name)
+	}
+
 	cronCore.AddJob(job.Spec, job.Job, job.Name)
 }
 

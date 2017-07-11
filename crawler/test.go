@@ -2,7 +2,7 @@ package crawler
 
 import (
 	"fmt"
-	"github.com/LSvKing/centipede/centipede"
+
 	"github.com/LSvKing/centipede/items"
 )
 
@@ -11,16 +11,16 @@ type TestCrawler struct {
 }
 
 func init() {
-	centipede.AddCrawler(&TestCrawler{
-		items.Crawler{
-			Name:   "测试",
-			Thread: 10,
-			Limit:  1,
-		},
-	})
+	//centipede.AddCrawler(&TestCrawler{
+	//	items.Crawler{
+	//		Name:   "测试",
+	//		Thread: 10,
+	//		Limit:  1,
+	//	},
+	//})
 }
 
-func (this *TestCrawler) Parse() {
+func (this *TestCrawler) Parse(params map[string]string) {
 
 }
 

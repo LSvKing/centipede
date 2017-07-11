@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/time/rate"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -14,6 +13,8 @@ import (
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"golang.org/x/time/rate"
 
 	"github.com/LSvKing/centipede/common"
 	"github.com/LSvKing/centipede/downloader"
@@ -31,7 +32,7 @@ type Centipede struct {
 	Pipeline   *pipeline.Pipeline
 	Limit      rate.Limit //每秒并发次数
 	Crawlers   map[string]items.CrawlerEr
-	CrawlerJob chan items.CrawlerEr
+	CrawlerJob chan items.CrawlerChan
 }
 
 var (
@@ -39,18 +40,18 @@ var (
 		Scheduler:  scheduler.New(),
 		Downloader: downloader.New(),
 		Pipeline:   pipeline.New(),
-		Crawlers:make(map[string]items.CrawlerEr),
-		CrawlerJob : make(chan items.CrawlerEr),
+		Crawlers:   make(map[string]items.CrawlerEr),
+		CrawlerJob: make(chan items.CrawlerChan, 1000),
 	}
 
-	log = logs.New()
+	Log = logs.New()
 )
 
-func Run() {
+func Run1() {
 
 	defer func() {
 		if p := recover(); p != nil {
-			log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
+			Log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
 		}
 	}()
 
@@ -66,7 +67,7 @@ func Run() {
 
 		crawlerWait.Add(1)
 
-		log.Debug(crawler.Option().Name + " 开始运行")
+		Log.Debug(crawler.Option().Name + " 开始运行")
 
 		if crawler.Option().Limit > 0 {
 			limiter = rate.NewLimiter(crawler.Option().Limit, 5)
@@ -80,7 +81,7 @@ func Run() {
 			DisableKeepAlives: true,
 		}
 
-		crawler.Parse()
+		crawler.Parse(map[string]string{})
 
 		funcMap := make(map[string]reflect.Value)
 
@@ -108,18 +109,18 @@ func Run() {
 
 			go func() {
 
-				log.Debug("start spider go")
-				log.Debug(req.GetUrl())
+				Log.Debug("start spider go")
+				Log.Debug(req.GetUrl())
 
 				defer func() {
-					log.Debug("free one")
+					Log.Debug("free one")
 					mc.FreeOne()
 				}()
 
 				if crawler.Option().DisableProxy {
 
 					if len(crawler.Option().ProxyList) < 1 {
-						log.Error("代理持为空")
+						Log.Error("代理持为空")
 					}
 
 					var rawProxy string
@@ -135,7 +136,7 @@ func Run() {
 					proxy, err := url.Parse(rawProxy)
 
 					if err != nil {
-						log.Error("代理转换格式失败")
+						Log.Error("代理转换格式失败")
 					}
 
 					transport.Proxy = http.ProxyURL(proxy)
@@ -143,25 +144,25 @@ func Run() {
 				}
 
 				if resp, err := centipede.Downloader.Download(req); err != nil {
-					log.WithField("type", "downloadReTry").WithError(err).Error("下载重试")
+					Log.WithField("type", "downloadReTry").WithError(err).Error("下载重试")
 
 					if req.ReTry < 4 {
 						req.ReTry += 1
 
 						centipede.Scheduler.Push(req)
 					} else {
-						log.WithField("type", "downloadError").WithError(err).Error("重试失败")
+						Log.WithField("type", "downloadError").WithError(err).Error("重试失败")
 					}
 
 				} else {
 					defer func() {
 						if p := recover(); p != nil {
-							log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
+							Log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
 						}
 
 					}()
 
-					log.Debug("get finsh")
+					Log.Debug("get finsh")
 
 					params := make([]reflect.Value, 1)
 					params[0] = reflect.ValueOf(resp)
@@ -172,8 +173,8 @@ func Run() {
 						r := reflect.ValueOf(crawler)
 
 						if r.MethodByName(req.Callback).IsValid() == false {
-							log.Error(req)
-							log.Errorf(req.Callback + "回调函数不存在")
+							Log.Error(req)
+							Log.Errorf(req.Callback + "回调函数不存在")
 						} else {
 							funcMap[req.Callback] = r.MethodByName(req.Callback)
 							funcMap[req.Callback].Call(params)
@@ -182,7 +183,7 @@ func Run() {
 					}
 				}
 
-				log.Debug("start spider go end")
+				Log.Debug("start spider go end")
 			}()
 
 		}
@@ -192,14 +193,165 @@ func Run() {
 
 }
 
-func (centipede Centipede) Run(){
-	//c := centipede.Crawlers[0]
-	//
-	//centipede.CrawlerJob <- c
+func Run() {
+	defer func() {
+		if p := recover(); p != nil {
+			Log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
+		}
+	}()
+
+	Log.Debug("Centipede 开始运行")
+
+	fmt.Println("Centipede 开始运行")
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	var crawlerWait sync.WaitGroup
+
+	ctx, _ := context.WithCancel(context.Background())
+
+	Log.Debug(len(centipede.CrawlerJob))
+
+	for crawlerChan := range centipede.CrawlerJob {
+
+		Log.Debug(crawlerChan.Option().Name + " 开始运行")
+
+		crawler := crawlerChan.CrawlerEr
+
+		crawlerWait.Add(1)
+
+		go centipede.Pipeline.Run(crawler)
+
+		go func() {
+
+			mc := resource_manage.NewResourceManageChan(crawler.Option().Thread)
+
+			crawler.Parse(crawlerChan.Params)
+
+			transport := &http.Transport{
+				DisableKeepAlives: true,
+			}
+
+			funcMap := make(map[string]reflect.Value)
+
+			var limiter *rate.Limiter
+
+			if crawler.Option().Limit > 0 {
+				limiter = rate.NewLimiter(crawler.Option().Limit, 5)
+			}
+
+			for {
+				if crawler.Option().Limit > 0 {
+					limiter.Wait(ctx)
+				}
+
+				if centipede.Scheduler.Count() == 0 && mc.Has() == 0 {
+					crawlerWait.Done()
+					fmt.Println("Spider Finfish")
+					break
+				}
+
+				mc.GetOne()
+
+				req := centipede.Scheduler.Poll()
+
+				if req == nil {
+					mc.FreeOne()
+					continue
+				}
+
+				go func() {
+
+					Log.Debug("start spider go")
+					Log.Debug(req.GetUrl())
+
+					defer func() {
+						Log.Debug("free one")
+						mc.FreeOne()
+					}()
+
+					if crawler.Option().DisableProxy {
+
+						if len(crawler.Option().ProxyList) < 1 {
+							Log.Error("代理持为空")
+						}
+
+						var rawProxy string
+
+						if len(crawler.Option().ProxyList) > 1 {
+							//从代理持随机取代理
+							rawProxy = crawler.Option().ProxyList[rand.Intn(len(crawler.Option().ProxyList))].ProxyURL
+
+						} else {
+							rawProxy = crawler.Option().ProxyList[0].ProxyURL
+						}
+
+						proxy, err := url.Parse(rawProxy)
+
+						if err != nil {
+							Log.Error("代理转换格式失败")
+						}
+
+						transport.Proxy = http.ProxyURL(proxy)
+						centipede.Downloader.Client.Transport = transport
+					}
+
+					if resp, err := centipede.Downloader.Download(req); err != nil {
+						Log.WithField("type", "downloadReTry").WithError(err).Error("下载重试")
+
+						if req.ReTry < 4 {
+							req.ReTry += 1
+
+							centipede.Scheduler.Push(req)
+						} else {
+							Log.WithField("type", "downloadError").WithError(err).Error("重试失败")
+						}
+
+					} else {
+						defer func() {
+							if p := recover(); p != nil {
+								Log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
+							}
+
+						}()
+
+						Log.Debug("get finsh")
+
+						params := make([]reflect.Value, 1)
+						params[0] = reflect.ValueOf(resp)
+
+						if callFunc, ok := funcMap[req.Callback]; ok {
+							callFunc.Call(params)
+						} else {
+							r := reflect.ValueOf(crawler)
+
+							if r.MethodByName(req.Callback).IsValid() == false {
+								Log.Error(req)
+								Log.Errorf(req.Callback + "回调函数不存在")
+							} else {
+								funcMap[req.Callback] = r.MethodByName(req.Callback)
+								funcMap[req.Callback].Call(params)
+							}
+
+						}
+					}
+
+					Log.Debug("start spider go end")
+				}()
+
+			}
+		}()
+
+		crawlerWait.Wait()
+
+	}
+
+	<-centipede.CrawlerJob
 }
 
 func AddCrawler(crawler items.CrawlerEr) {
 	centipede.Crawlers[crawler.Option().Name] = crawler
+	PushCrawler(crawler.Option().Name)
 }
 
 // AddRequest 添加请求
@@ -208,15 +360,18 @@ func AddRequest(req *request.Request) {
 }
 
 // AddCrawlerChan 加入爬虫到通道中
-func AddCrawlerChan(crawlerName string){
-	centipede.CrawlerJob <- centipede.Crawlers[crawlerName]
+func AddCrawlerChan(crawlerName string) {
+	centipede.CrawlerJob <- items.CrawlerChan{
+		CrawlerEr: centipede.Crawlers[crawlerName],
+		Params:    map[string]string{},
+	}
 }
 
 // AddData 添加数据
 func AddData(data items.Data, collection string) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Fatal(err)
+			Log.Fatal(err)
 		}
 	}()
 
@@ -263,7 +418,7 @@ func SetCookie(rawUrl string, cookies []*http.Cookie) {
 	u, err := url.Parse(rawUrl)
 
 	if err != nil {
-		log.Error("Url无效")
+		Log.Error("Url无效")
 	}
 
 	centipede.Downloader.Client.Jar.SetCookies(u, cookies)
@@ -286,13 +441,13 @@ func SetCookieJSON(rawUrl string, cookie string) {
 	u, err := url.Parse(rawUrl)
 
 	if err != nil {
-		log.Error("Url无效")
+		Log.Error("Url无效")
 	}
 
 	err = json.Unmarshal([]byte(cookie), &cookies)
 
 	if err != nil {
-		log.Error("JSON格式 Cookie 无效")
+		Log.Error("JSON格式 Cookie 无效")
 	}
 
 	centipede.Downloader.Client.Jar.SetCookies(u, cookies)
@@ -306,7 +461,7 @@ func SetCookieString(rawUrl string, cookie string) {
 	u, err := url.Parse(rawUrl)
 
 	if err != nil {
-		log.Error("Url无效")
+		Log.Error("Url无效")
 	}
 
 	cookies := common.SplitCookies(cookie)
@@ -314,11 +469,18 @@ func SetCookieString(rawUrl string, cookie string) {
 	centipede.Downloader.Client.Jar.SetCookies(u, cookies)
 }
 
-func PushCrawler(crawler string)  {
-
-	if c,ok := centipede.Crawlers[crawler]; ok{
-		centipede.CrawlerJob <- c
-	}else{
-		log.Error(crawler ,"爬虫脚本不存在")
+func PushCrawler(crawler string) {
+	if c, ok := centipede.Crawlers[crawler]; ok {
+		Log.Debugln(c)
+		centipede.CrawlerJob <- items.CrawlerChan{
+			CrawlerEr: c,
+			Params:    map[string]string{},
+		}
+	} else {
+		Log.Errorln(crawler, "爬虫脚本不存在")
 	}
+}
+
+func Close() {
+	close(centipede.CrawlerJob)
 }
