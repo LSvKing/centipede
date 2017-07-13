@@ -69,6 +69,10 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 
 	log.Debugln(crawler.Option().Name, "Pipeline Run")
 
+	defer func() {
+		log.Debugln(crawler.Option().Name, " Pipeline", "End")
+	}()
+
 	//dataCache := make(items.DataCache,0,pipeline.CacheSize)
 
 	//go func() {
@@ -77,6 +81,8 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 			if err := recover(); err != nil {
 				log.Errorf("err")
 			}
+
+			log.Debugln(crawler.Option().Name, " Pipeline", "End")
 
 		}()
 
@@ -91,6 +97,8 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 			//pipeline.OutPut.OutPut(dataCache)
 			//
 			//dataCache = dataCache[:0]
+
+			//log.Debugln("pipeline", data)
 
 			crawler.Pipeline(data)
 		}
@@ -159,8 +167,8 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 
 	}()
 
-	<-pipeline.DataChan
-	<-pipeline.FileChan
+	//<-pipeline.DataChan
+	//<-pipeline.FileChan
 	//}()
 
 }

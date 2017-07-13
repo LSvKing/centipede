@@ -224,6 +224,10 @@ func Run() {
 
 		go func() {
 
+			defer func() {
+				Log.Infoln(crawler.Option().Name, " Finish")
+			}()
+
 			mc := resource_manage.NewResourceManageChan(crawler.Option().Thread)
 
 			crawler.Parse(crawlerChan.Params)
@@ -232,7 +236,7 @@ func Run() {
 				DisableKeepAlives: true,
 			}
 
-			funcMap := make(map[string]reflect.Value)
+			funcMap := make(map[string]reflect.Value, 100)
 
 			var limiter *rate.Limiter
 
@@ -247,7 +251,6 @@ func Run() {
 
 				if centipede.Scheduler.Count() == 0 && mc.Has() == 0 {
 					crawlerWait.Done()
-					fmt.Println("Spider Finfish")
 					break
 				}
 
@@ -266,7 +269,6 @@ func Run() {
 					Log.Debug(req.GetUrl())
 
 					defer func() {
-						Log.Debug("free one")
 						mc.FreeOne()
 					}()
 

@@ -140,7 +140,6 @@ func (this *QingTing) ParseList(response *http.Response) {
 	}
 
 	var channels Channels
-
 	err = json.Unmarshal(body, &channels)
 
 	centipede.Log.Debugln(channels)
@@ -185,6 +184,8 @@ func (this *QingTing) ParseItem(response *http.Response) {
 
 	body, err := ioutil.ReadAll(response.Body)
 
+	centipede.Log.Debugln(response.Request.URL.String())
+
 	if err != nil {
 		centipede.Log.Error(this.Name, " Error:", err.Error())
 	}
@@ -192,6 +193,8 @@ func (this *QingTing) ParseItem(response *http.Response) {
 	var item ChannelItem
 
 	json.Unmarshal(body, &item)
+
+	centipede.Log.Debugln(item)
 
 	centipede.AddData(
 		items.Data{
