@@ -15,3 +15,7 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
+
+func CloseHandler(w http.ResponseWriter, r *http.Request) {
+	centipede.Close()
+}

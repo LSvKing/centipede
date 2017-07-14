@@ -17,6 +17,7 @@ func main() {
 
 	r.HandleFunc("/", service.TestHandler)
 	r.HandleFunc("/add", service.AddHandler)
+	r.HandleFunc("/close", service.CloseHandler)
 	go http.ListenAndServe(":8000", r)
 
 	centipede.Run()

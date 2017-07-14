@@ -194,8 +194,6 @@ func (this *QingTing) ParseItem(response *http.Response) {
 
 	json.Unmarshal(body, &item)
 
-	centipede.Log.Debugln(item)
-
 	centipede.AddData(
 		items.Data{
 			struct {

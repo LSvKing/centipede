@@ -76,6 +76,10 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 	//dataCache := make(items.DataCache,0,pipeline.CacheSize)
 
 	//go func() {
+
+
+	//TODO
+	//Pipeline chanel 没有销毁
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
