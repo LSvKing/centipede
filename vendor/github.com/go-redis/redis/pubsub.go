@@ -88,19 +88,22 @@ func (c *PubSub) _subscribe(cn *pool.Conn, redisCmd string, channels ...string) 
 	return writeCmd(cn, cmd)
 }
 
-func (c *PubSub) putConn(cn *pool.Conn, err error) {
-	if !internal.IsBadConn(err, true) {
-		return
-	}
-
+func (c *PubSub) releaseConn(cn *pool.Conn, err error) {
 	c.mu.Lock()
-	if c.cn == cn {
-		_ = c.releaseConn()
-	}
+	c._releaseConn(cn, err)
 	c.mu.Unlock()
 }
 
-func (c *PubSub) releaseConn() error {
+func (c *PubSub) _releaseConn(cn *pool.Conn, err error) {
+	if c.cn != cn {
+		return
+	}
+	if internal.IsBadConn(err, true) {
+		_ = c.closeTheCn()
+	}
+}
+
+func (c *PubSub) closeTheCn() error {
 	err := c.closeConn(c.cn)
 	c.cn = nil
 	return err
@@ -116,7 +119,7 @@ func (c *PubSub) Close() error {
 	c.closed = true
 
 	if c.cn != nil {
-		return c.releaseConn()
+		return c.closeTheCn()
 	}
 	return nil
 }
@@ -168,7 +171,7 @@ func (c *PubSub) subscribe(redisCmd string, channels ...string) error {
 	}
 
 	err = c._subscribe(cn, redisCmd, channels...)
-	c.putConn(cn, err)
+	c._releaseConn(cn, err)
 	return err
 }
 
@@ -186,7 +189,7 @@ func (c *PubSub) Ping(payload ...string) error {
 
 	cn.SetWriteTimeout(c.opt.WriteTimeout)
 	err = writeCmd(cn, cmd)
-	c.putConn(cn, err)
+	c.releaseConn(cn, err)
 	return err
 }
 
@@ -279,7 +282,7 @@ func (c *PubSub) ReceiveTimeout(timeout time.Duration) (interface{}, error) {
 
 	cn.SetReadTimeout(timeout)
 	err = c.cmd.readReply(cn)
-	c.putConn(cn, err)
+	c.releaseConn(cn, err)
 	if err != nil {
 		return nil, err
 	}

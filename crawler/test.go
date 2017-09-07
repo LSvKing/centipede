@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/LSvKing/centipede/centipede"
-
 	"github.com/LSvKing/centipede/items"
 	"github.com/LSvKing/centipede/request"
 )
@@ -52,6 +51,7 @@ func (this *TestCrawler) Option() items.Crawler {
 }
 
 func (this *TestCrawler) Pipeline(data items.DataRow) {
+
 	fmt.Println("Is Test Pipeline ", data)
 }
 

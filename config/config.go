@@ -29,7 +29,7 @@ type (
 
 func Get() *Config {
 	appConfig := new(Config)
-	m := multiconfig.NewWithPath("config.toml")
+	m := multiconfig.NewWithPath("config.json")
 	m.MustLoad(appConfig)
 
 	return appConfig

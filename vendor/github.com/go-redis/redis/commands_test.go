@@ -27,11 +27,21 @@ var _ = Describe("Commands", func() {
 	Describe("server", func() {
 
 		It("should Auth", func() {
-			_, err := client.Pipelined(func(pipe redis.Pipeliner) error {
+			cmds, err := client.Pipelined(func(pipe redis.Pipeliner) error {
 				pipe.Auth("password")
+				pipe.Auth("")
 				return nil
 			})
 			Expect(err).To(MatchError("ERR Client sent AUTH, but no password is set"))
+			Expect(cmds[0].Err()).To(MatchError("ERR Client sent AUTH, but no password is set"))
+			Expect(cmds[1].Err()).To(MatchError("ERR Client sent AUTH, but no password is set"))
+
+			stats := client.Pool().Stats()
+			Expect(stats.Requests).To(Equal(uint32(2)))
+			Expect(stats.Hits).To(Equal(uint32(1)))
+			Expect(stats.Timeouts).To(Equal(uint32(0)))
+			Expect(stats.TotalConns).To(Equal(uint32(1)))
+			Expect(stats.FreeConns).To(Equal(uint32(1)))
 		})
 
 		It("should Echo", func() {
@@ -139,10 +149,10 @@ var _ = Describe("Commands", func() {
 			Expect(configSet.Val()).To(Equal("OK"))
 		})
 
-		It("should DbSize", func() {
-			dbSize := client.DbSize()
-			Expect(dbSize.Err()).NotTo(HaveOccurred())
-			Expect(dbSize.Val()).To(Equal(int64(0)))
+		It("should DBSize", func() {
+			size, err := client.DBSize().Result()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(size).To(Equal(int64(0)))
 		})
 
 		It("should Info", func() {
@@ -185,6 +195,29 @@ var _ = Describe("Commands", func() {
 			tm, err := client.Time().Result()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(tm).To(BeTemporally("~", time.Now(), 3*time.Second))
+		})
+
+		It("Should Command", func() {
+			cmds, err := client.Command().Result()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(cmds)).To(BeNumerically("~", 180, 10))
+
+			cmd := cmds["mget"]
+			Expect(cmd.Name).To(Equal("mget"))
+			Expect(cmd.Arity).To(Equal(int8(-2)))
+			Expect(cmd.Flags).To(ContainElement("readonly"))
+			Expect(cmd.FirstKeyPos).To(Equal(int8(1)))
+			Expect(cmd.LastKeyPos).To(Equal(int8(-1)))
+			Expect(cmd.StepCount).To(Equal(int8(1)))
+
+			cmd = cmds["ping"]
+			Expect(cmd.Name).To(Equal("ping"))
+			Expect(cmd.Arity).To(Equal(int8(-1)))
+			Expect(cmd.Flags).To(ContainElement("stale"))
+			Expect(cmd.Flags).To(ContainElement("fast"))
+			Expect(cmd.FirstKeyPos).To(Equal(int8(0)))
+			Expect(cmd.LastKeyPos).To(Equal(int8(0)))
+			Expect(cmd.StepCount).To(Equal(int8(0)))
 		})
 
 	})
@@ -2176,20 +2209,24 @@ var _ = Describe("Commands", func() {
 		})
 
 		It("should ZCount", func() {
-			zAdd := client.ZAdd("zset", redis.Z{1, "one"})
-			Expect(zAdd.Err()).NotTo(HaveOccurred())
-			zAdd = client.ZAdd("zset", redis.Z{2, "two"})
-			Expect(zAdd.Err()).NotTo(HaveOccurred())
-			zAdd = client.ZAdd("zset", redis.Z{3, "three"})
-			Expect(zAdd.Err()).NotTo(HaveOccurred())
+			err := client.ZAdd("zset", redis.Z{1, "one"}).Err()
+			Expect(err).NotTo(HaveOccurred())
+			err = client.ZAdd("zset", redis.Z{2, "two"}).Err()
+			Expect(err).NotTo(HaveOccurred())
+			err = client.ZAdd("zset", redis.Z{3, "three"}).Err()
+			Expect(err).NotTo(HaveOccurred())
 
-			zCount := client.ZCount("zset", "-inf", "+inf")
-			Expect(zCount.Err()).NotTo(HaveOccurred())
-			Expect(zCount.Val()).To(Equal(int64(3)))
+			count, err := client.ZCount("zset", "-inf", "+inf").Result()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(count).To(Equal(int64(3)))
 
-			zCount = client.ZCount("zset", "(1", "3")
-			Expect(zCount.Err()).NotTo(HaveOccurred())
-			Expect(zCount.Val()).To(Equal(int64(2)))
+			count, err = client.ZCount("zset", "(1", "3").Result()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(count).To(Equal(int64(2)))
+
+			count, err = client.ZLexCount("zset", "-", "+").Result()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(count).To(Equal(int64(3)))
 		})
 
 		It("should ZIncrBy", func() {
@@ -2879,24 +2916,6 @@ var _ = Describe("Commands", func() {
 			err := client.Get("key").Scan(value)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(value.Number).To(Equal(42))
-		})
-
-	})
-
-	Describe("Command", func() {
-
-		It("returns map of commands", func() {
-			cmds, err := client.Command().Result()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(cmds)).To(BeNumerically("~", 180, 10))
-
-			cmd := cmds["mget"]
-			Expect(cmd.Name).To(Equal("mget"))
-			Expect(cmd.Arity).To(Equal(int8(-2)))
-			Expect(cmd.Flags).To(ContainElement("readonly"))
-			Expect(cmd.FirstKeyPos).To(Equal(int8(1)))
-			Expect(cmd.LastKeyPos).To(Equal(int8(-1)))
-			Expect(cmd.StepCount).To(Equal(int8(1)))
 		})
 
 	})

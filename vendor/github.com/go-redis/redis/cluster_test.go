@@ -200,7 +200,7 @@ var _ = Describe("ClusterClient", func() {
 
 			Eventually(func() string {
 				return client.Get("A").Val()
-			}).Should(Equal("VALUE"))
+			}, 30*time.Second).Should(Equal("VALUE"))
 
 			cnt, err := client.Del("A").Result()
 			Expect(err).NotTo(HaveOccurred())
@@ -215,7 +215,7 @@ var _ = Describe("ClusterClient", func() {
 
 			Eventually(func() string {
 				return client.Get("A").Val()
-			}).Should(Equal("VALUE"))
+			}, 30*time.Second).Should(Equal("VALUE"))
 		})
 
 		It("distributes keys", func() {
@@ -227,7 +227,7 @@ var _ = Describe("ClusterClient", func() {
 			for _, master := range cluster.masters() {
 				Eventually(func() string {
 					return master.Info("keyspace").Val()
-				}, 5*time.Second).Should(Or(
+				}, 30*time.Second).Should(Or(
 					ContainSubstring("keys=31"),
 					ContainSubstring("keys=29"),
 					ContainSubstring("keys=40"),
@@ -251,7 +251,7 @@ var _ = Describe("ClusterClient", func() {
 			for _, master := range cluster.masters() {
 				Eventually(func() string {
 					return master.Info("keyspace").Val()
-				}, 5*time.Second).Should(Or(
+				}, 30*time.Second).Should(Or(
 					ContainSubstring("keys=31"),
 					ContainSubstring("keys=29"),
 					ContainSubstring("keys=40"),
@@ -320,10 +320,6 @@ var _ = Describe("ClusterClient", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(cmds).To(HaveLen(14))
 
-					if opt.RouteByLatency {
-						return
-					}
-
 					for _, key := range keys {
 						slot := hashtag.Slot(key)
 						client.SwapSlotNodes(slot)
@@ -342,7 +338,8 @@ var _ = Describe("ClusterClient", func() {
 						Expect(get.Val()).To(Equal(key + "_value"))
 
 						ttl := cmds[(i*2)+1].(*redis.DurationCmd)
-						Expect(ttl.Val()).To(BeNumerically("~", time.Duration(i+1)*time.Hour, time.Second))
+						dur := time.Duration(i+1) * time.Hour
+						Expect(ttl.Val()).To(BeNumerically("~", dur, 5*time.Second))
 					}
 				})
 
@@ -431,6 +428,9 @@ var _ = Describe("ClusterClient", func() {
 		})
 
 		AfterEach(func() {
+			_ = client.ForEachMaster(func(master *redis.Client) error {
+				return master.FlushDB().Err()
+			})
 			Expect(client.Close()).NotTo(HaveOccurred())
 		})
 
@@ -476,9 +476,9 @@ var _ = Describe("ClusterClient", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, client := range cluster.masters() {
-				keys, err := client.Keys("*").Result()
+				size, err := client.DBSize().Result()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(keys).To(HaveLen(0))
+				Expect(size).To(Equal(int64(0)))
 			}
 		})
 
@@ -551,11 +551,17 @@ var _ = Describe("ClusterClient", func() {
 			})
 
 			_ = client.ForEachSlave(func(slave *redis.Client) error {
+				Eventually(func() int64 {
+					return client.DBSize().Val()
+				}, 30*time.Second).Should(Equal(int64(0)))
 				return slave.ClusterFailover().Err()
 			})
 		})
 
 		AfterEach(func() {
+			_ = client.ForEachMaster(func(master *redis.Client) error {
+				return master.FlushDB().Err()
+			})
 			Expect(client.Close()).NotTo(HaveOccurred())
 		})
 
@@ -571,10 +577,19 @@ var _ = Describe("ClusterClient", func() {
 			_ = client.ForEachMaster(func(master *redis.Client) error {
 				return master.FlushDB().Err()
 			})
+
+			_ = client.ForEachSlave(func(slave *redis.Client) error {
+				Eventually(func() int64 {
+					return client.DBSize().Val()
+				}, 30*time.Second).Should(Equal(int64(0)))
+				return nil
+			})
 		})
 
 		AfterEach(func() {
-			client.FlushDB()
+			_ = client.ForEachMaster(func(master *redis.Client) error {
+				return master.FlushDB().Err()
+			})
 			Expect(client.Close()).NotTo(HaveOccurred())
 		})
 
@@ -593,7 +608,7 @@ var _ = Describe("ClusterClient without nodes", func() {
 		Expect(client.Close()).NotTo(HaveOccurred())
 	})
 
-	It("returns an error", func() {
+	It("Ping returns an error", func() {
 		err := client.Ping().Err()
 		Expect(err).To(MatchError("redis: cluster has no nodes"))
 	})
@@ -622,7 +637,7 @@ var _ = Describe("ClusterClient without valid nodes", func() {
 
 	It("returns an error", func() {
 		err := client.Ping().Err()
-		Expect(err).To(MatchError("ERR This instance has cluster support disabled"))
+		Expect(err).To(MatchError("redis: cannot load cluster slots"))
 	})
 
 	It("pipeline returns an error", func() {
@@ -630,7 +645,7 @@ var _ = Describe("ClusterClient without valid nodes", func() {
 			pipe.Ping()
 			return nil
 		})
-		Expect(err).To(MatchError("ERR This instance has cluster support disabled"))
+		Expect(err).To(MatchError("redis: cannot load cluster slots"))
 	})
 })
 
@@ -660,7 +675,7 @@ var _ = Describe("ClusterClient timeout", func() {
 		It("Tx timeouts", func() {
 			err := client.Watch(func(tx *redis.Tx) error {
 				return tx.Ping().Err()
-			})
+			}, "foo")
 			Expect(err).To(HaveOccurred())
 			Expect(err.(net.Error).Timeout()).To(BeTrue())
 		})
@@ -672,37 +687,15 @@ var _ = Describe("ClusterClient timeout", func() {
 					return nil
 				})
 				return err
-			})
+			}, "foo")
 			Expect(err).To(HaveOccurred())
 			Expect(err.(net.Error).Timeout()).To(BeTrue())
 		})
 	}
 
-	Context("read timeout", func() {
-		BeforeEach(func() {
-			opt := redisClusterOptions()
-			opt.ReadTimeout = time.Nanosecond
-			opt.WriteTimeout = -1
-			client = cluster.clusterClient(opt)
-		})
+	const pause = time.Second
 
-		testTimeout()
-	})
-
-	Context("write timeout", func() {
-		BeforeEach(func() {
-			opt := redisClusterOptions()
-			opt.ReadTimeout = time.Nanosecond
-			opt.WriteTimeout = -1
-			client = cluster.clusterClient(opt)
-		})
-
-		testTimeout()
-	})
-
-	Context("network timeout", func() {
-		const pause = time.Second
-
+	Context("read/write timeout", func() {
 		BeforeEach(func() {
 			opt := redisClusterOptions()
 			opt.ReadTimeout = 100 * time.Millisecond
@@ -717,11 +710,12 @@ var _ = Describe("ClusterClient timeout", func() {
 		})
 
 		AfterEach(func() {
-			Eventually(func() error {
-				return client.ForEachNode(func(client *redis.Client) error {
+			client.ForEachNode(func(client *redis.Client) error {
+				Eventually(func() error {
 					return client.Ping().Err()
-				})
-			}, 2*pause).ShouldNot(HaveOccurred())
+				}, 2*pause).ShouldNot(HaveOccurred())
+				return nil
+			})
 		})
 
 		testTimeout()

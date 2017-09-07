@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"runtime"
 	"runtime/debug"
-	"sync"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -54,13 +53,11 @@ func Run() {
 		}
 	}()
 
-	Log.Debug("Centipede 开始运行")
-
-	fmt.Println("Centipede 开始运行")
+	Log.Infoln("Centipede 开始运行")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	var crawlerWait sync.WaitGroup
+	//var crawlerWait sync.WaitGroup
 
 	ctx, _ := context.WithCancel(context.Background())
 
@@ -68,11 +65,13 @@ func Run() {
 
 	for crawlerChan := range centipede.CrawlerJob {
 
+		Log.Debugln(crawlerChan.Option().Name)
+
 		go func() {
 
 			crawler := crawlerChan.CrawlerEr
 
-			crawlerWait.Add(1)
+			//crawlerWait.Add(1)
 
 			go centipede.Pipeline.Run(crawler)
 
@@ -104,7 +103,7 @@ func Run() {
 				}
 
 				if centipede.Scheduler.Count() == 0 && mc.Has() == 0 {
-					crawlerWait.Done()
+					//crawlerWait.Done()
 					break
 				}
 
@@ -198,7 +197,7 @@ func Run() {
 			}
 		}()
 
-		crawlerWait.Wait()
+		//crawlerWait.Wait()
 
 	}
 

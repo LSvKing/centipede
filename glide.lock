@@ -1,5 +1,5 @@
 hash: a4f779dc0a019e1dcb192f40c0590d45a2e7836a2c0ca9e23f02b70a92a740da
-updated: 2017-07-13T17:29:40.960389715+08:00
+updated: 2017-09-07T12:10:08.178564914+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -14,13 +14,15 @@ imports:
 - name: github.com/fatih/structs
   version: 7e5a8eef611ee84dd359503f3969f80df4c50723
 - name: github.com/go-redis/redis
-  version: da63fe7def48e378caf9539abf64b9b1e37bc01e
+  version: 74d5147d860804ea34633071d0c91a7f4b0b5c3a
   subpackages:
   - internal
   - internal/consistenthash
   - internal/hashtag
   - internal/pool
   - internal/proto
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: bcd8bc72b08df0f70df986b97f95590779502d31
 - name: github.com/jaytaylor/html2text
@@ -36,19 +38,24 @@ imports:
 - name: github.com/PuerkitoBio/goquery
   version: e1271ee34c6a305e38566ecd27ae374944907ee9
 - name: github.com/sirupsen/logrus
-  version: 1fe8319fcaef78ef9220c9b05178df0f871dbc5d
+  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/weekface/mgorus
   version: 83720e22971a8301c5b2738c9364accd3d9eb13a
+- name: golang.org/x/crypto
+  version: 81e90905daefcd6fd217b62423c0908922eadb30
+  subpackages:
+  - ssh/terminal
 - name: golang.org/x/net
-  version: f01ecb60fe3835d80d9a0b7b2bf24b228c89260e
+  version: 66aacef3dd8a676686c7ae3716979581e8b03c47
   subpackages:
   - context
   - html
   - html/atom
 - name: golang.org/x/sys
-  version: abf9c25f54453410d0c6668e519582a9e1115027
+  version: 9aade4d3a3b7e6d876cd3823ad20ec45fc035402
   subpackages:
   - unix
+  - windows
 - name: golang.org/x/time
   version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
   subpackages:
@@ -61,9 +68,9 @@ imports:
   - internal/sasl
   - internal/scram
 - name: gopkg.in/yaml.v2
-  version: 1be3d31502d6eabc0dd7ce5b0daab022e14a5538
+  version: eb3733d160e74a9c7e442f435eb3bea458e1d19f
 - name: upper.io/db.v3
-  version: 03fd6b08517b0d6a70d5a22e26ea8760d7a43085
+  version: 46f50a98f8d5d77d1d4631f1bcc0ce6496e55734
   subpackages:
   - internal/immutable
   - mongo

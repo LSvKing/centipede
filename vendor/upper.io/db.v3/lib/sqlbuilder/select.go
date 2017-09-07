@@ -114,7 +114,7 @@ type selector struct {
 	prev *selector
 }
 
-var _ = immutable.Immutable(&inserter{})
+var _ = immutable.Immutable(&selector{})
 
 func (sel *selector) SQLBuilder() *sqlBuilder {
 	if sel.prev == nil {
@@ -135,6 +135,12 @@ func (sel *selector) frame(fn func(*selectorQuery) error) *selector {
 	return &selector{prev: sel, fn: fn}
 }
 
+func (sel *selector) clone() Selector {
+	return sel.frame(func(*selectorQuery) error {
+		return nil
+	})
+}
+
 func (sel *selector) From(tables ...interface{}) Selector {
 	return sel.frame(
 		func(sq *selectorQuery) error {
@@ -147,6 +153,13 @@ func (sel *selector) From(tables ...interface{}) Selector {
 			return nil
 		},
 	)
+}
+
+func (sel *selector) setColumns(columns ...interface{}) Selector {
+	return sel.frame(func(sq *selectorQuery) error {
+		sq.columns = nil
+		return sq.pushColumns(columns...)
+	})
 }
 
 func (sel *selector) Columns(columns ...interface{}) Selector {
@@ -182,6 +195,10 @@ func (sel *selector) Distinct(exps ...interface{}) Selector {
 
 func (sel *selector) Where(terms ...interface{}) Selector {
 	return sel.frame(func(sq *selectorQuery) error {
+		if len(terms) == 1 && terms[0] == nil {
+			sq.where, sq.whereArgs = &exql.Where{}, []interface{}{}
+			return nil
+		}
 		return sq.and(sel.SQLBuilder(), terms...)
 	})
 }
@@ -225,6 +242,13 @@ func (sel *selector) GroupBy(columns ...interface{}) Selector {
 
 func (sel *selector) OrderBy(columns ...interface{}) Selector {
 	return sel.frame(func(sq *selectorQuery) error {
+
+		if len(columns) == 1 && columns[0] == nil {
+			sq.orderBy = nil
+			sq.orderByArgs = nil
+			return nil
+		}
+
 		var sortColumns exql.SortColumns
 
 		for i := range columns {
@@ -286,12 +310,12 @@ func (sel *selector) Using(columns ...interface{}) Selector {
 
 		joins := len(sq.joins)
 		if joins == 0 {
-			return errors.New(`Cannot use Using() without a preceding Join() expression.`)
+			return errors.New(`cannot use Using() without a preceding Join() expression`)
 		}
 
 		lastJoin := sq.joins[joins-1]
 		if lastJoin.On != nil {
-			return errors.New(`Cannot use Using() and On() with the same Join() expression.`)
+			return errors.New(`cannot use Using() and On() with the same Join() expression`)
 		}
 
 		fragments, args, err := columnFragments(columns)
@@ -341,12 +365,12 @@ func (sel *selector) On(terms ...interface{}) Selector {
 		joins := len(sq.joins)
 
 		if joins == 0 {
-			return errors.New(`Cannot use On() without a preceding Join() expression.`)
+			return errors.New(`cannot use On() without a preceding Join() expression`)
 		}
 
 		lastJoin := sq.joins[joins-1]
 		if lastJoin.On != nil {
-			return errors.New(`Cannot use Using() and On() with the same Join() expression.`)
+			return errors.New(`cannot use Using() and On() with the same Join() expression`)
 		}
 
 		w, a := sel.SQLBuilder().t.toWhereWithArguments(terms)
@@ -362,6 +386,9 @@ func (sel *selector) On(terms ...interface{}) Selector {
 
 func (sel *selector) Limit(n int) Selector {
 	return sel.frame(func(sq *selectorQuery) error {
+		if n < 0 {
+			n = 0
+		}
 		sq.limit = exql.Limit(n)
 		return nil
 	})
@@ -369,6 +396,9 @@ func (sel *selector) Limit(n int) Selector {
 
 func (sel *selector) Offset(n int) Selector {
 	return sel.frame(func(sq *selectorQuery) error {
+		if n < 0 {
+			n = 0
+		}
 		sq.offset = exql.Offset(n)
 		return nil
 	})
@@ -389,7 +419,7 @@ func (sel *selector) As(alias string) Selector {
 			if err != nil {
 				return err
 			}
-			sq.table.Columns[last] = exql.RawValue("(" + raw.Value + ") AS " + compiled)
+			sq.table.Columns[last] = exql.RawValue(raw.Value + " AS " + compiled)
 		}
 		return nil
 	})
@@ -442,13 +472,18 @@ func (sel *selector) Iterator() Iterator {
 }
 
 func (sel *selector) IteratorContext(ctx context.Context) Iterator {
+	sess := sel.SQLBuilder().sess
 	sq, err := sel.build()
 	if err != nil {
-		return &iterator{nil, err}
+		return &iterator{sess, nil, err}
 	}
 
-	rows, err := sel.SQLBuilder().sess.StatementQuery(ctx, sq.statement(), sq.arguments()...)
-	return &iterator{rows, err}
+	rows, err := sess.StatementQuery(ctx, sq.statement(), sq.arguments()...)
+	return &iterator{sess, rows, err}
+}
+
+func (sel *selector) Paginate(pageSize uint) Paginator {
+	return newPaginator(sel.clone(), pageSize)
 }
 
 func (sel *selector) All(destSlice interface{}) error {

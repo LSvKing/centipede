@@ -24,8 +24,11 @@ package postgresql
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"math/rand"
+	"strconv"
+
 	"os"
 	"sync"
 	"testing"
@@ -142,27 +145,58 @@ func tearUp() error {
 
 		`DROP TABLE IF EXISTS pg_types`,
 
-		`CREATE TABLE pg_types (
-			id serial primary key,
+		`CREATE TABLE pg_types (id serial primary key
+			, uint8_value smallint
+			, uint8_value_array smallint[]
 
-			auto_integer_array integer[],
-			auto_string_array text[],
+			, int64_value smallint
+			, int64_value_array smallint[]
 
-			auto_integer_array_ptr integer[],
-			auto_string_array_ptr text[],
+			, integer_array integer[]
+			, string_array text[]
+			, jsonb_map jsonb
 
-			integer_array integer[],
-			string_value varchar(255),
+			, integer_array_ptr integer[]
+			, string_array_ptr text[]
+			, jsonb_map_ptr jsonb
 
-			auto_jsonb jsonb,
-			auto_jsonb_ptr jsonb,
+			, auto_integer_array integer[]
+			, auto_string_array text[]
+			, auto_jsonb_map jsonb
+			, auto_jsonb_map_string jsonb
+			, auto_jsonb_map_integer jsonb
 
-			integer_valuer_value smallint[],
-			string_array text[],
+			, jsonb_object jsonb
+			, jsonb_array jsonb
 
-			field1 int,
-			field2 varchar(64),
-			field3 decimal
+			, custom_jsonb_object jsonb
+			, auto_custom_jsonb_object jsonb
+
+			, custom_jsonb_object_ptr jsonb
+			, auto_custom_jsonb_object_ptr jsonb
+
+			, custom_jsonb_object_array jsonb
+			, auto_custom_jsonb_object_array jsonb
+			, auto_custom_jsonb_object_map jsonb
+
+			, string_value varchar(255)
+			, integer_value int
+			, varchar_value varchar(64)
+			, decimal_value decimal
+
+			, integer_compat_value int
+			, uinteger_compat_value int
+			, string_compat_value text
+
+			, integer_compat_value_jsonb_array jsonb
+			, string_compat_value_jsonb_array jsonb
+			, uinteger_compat_value_jsonb_array jsonb
+
+			, string_value_ptr varchar(255)
+			, integer_value_ptr int
+			, varchar_value_ptr varchar(64)
+			, decimal_value_ptr decimal
+
 		)`,
 
 		`DROP TABLE IF EXISTS issue_370`,
@@ -190,6 +224,458 @@ func tearUp() error {
 	return nil
 }
 
+type customJSONB struct {
+	N string  `json:"name"`
+	V float64 `json:"value"`
+}
+
+func (c customJSONB) Value() (driver.Value, error) {
+	return JSONBValue(c)
+}
+
+func (c *customJSONB) Scan(src interface{}) error {
+	return ScanJSONB(c, src)
+}
+
+type autoCustomJSONB struct {
+	N string  `json:"name"`
+	V float64 `json:"value"`
+
+	*JSONBConverter
+}
+
+var (
+	_ = driver.Valuer(&customJSONB{})
+	_ = sql.Scanner(&customJSONB{})
+)
+
+type int64Compat int64
+
+type uintCompat uint
+
+type stringCompat string
+
+type uint8Compat uint8
+
+type int64CompatArray []int64Compat
+
+type uint8CompatArray []uint8Compat
+
+type uintCompatArray []uintCompat
+
+func (u *uint8Compat) Scan(src interface{}) error {
+	if src != nil {
+		switch v := src.(type) {
+		case int64:
+			*u = uint8Compat((src).(int64))
+		case []byte:
+			i, err := strconv.ParseInt(string(v), 10, 64)
+			if err != nil {
+				return err
+			}
+			*u = uint8Compat(i)
+		default:
+			panic(fmt.Sprintf("expected type %T", src))
+		}
+	}
+	return nil
+}
+
+func (u uint8CompatArray) WrapValue(src interface{}) interface{} {
+	return Array(src)
+}
+
+func (u *int64Compat) Scan(src interface{}) error {
+	if src != nil {
+		switch v := src.(type) {
+		case int64:
+			*u = int64Compat((src).(int64))
+		case []byte:
+			i, err := strconv.ParseInt(string(v), 10, 64)
+			if err != nil {
+				return err
+			}
+			*u = int64Compat(i)
+		default:
+			panic(fmt.Sprintf("expected type %T", src))
+		}
+	}
+	return nil
+}
+
+func (u int64CompatArray) WrapValue(src interface{}) interface{} {
+	return Array(src)
+}
+
+func testPostgreSQLTypes(t *testing.T, sess sqlbuilder.Database) {
+
+	type PGTypeInline struct {
+		IntegerArrayPtr *Int64Array  `db:"integer_array_ptr,omitempty"`
+		StringArrayPtr  *StringArray `db:"string_array_ptr,omitempty"`
+		JSONBMapPtr     *JSONBMap    `db:"jsonb_map_ptr,omitempty"`
+	}
+
+	type PGTypeAutoInline struct {
+		AutoIntegerArray    []int64                `db:"auto_integer_array"`
+		AutoStringArray     []string               `db:"auto_string_array"`
+		AutoJSONBMap        map[string]interface{} `db:"auto_jsonb_map"`
+		AutoJSONBMapString  map[string]string      `db:"auto_jsonb_map_string"`
+		AutoJSONBMapInteger map[string]int64       `db:"auto_jsonb_map_integer"`
+	}
+
+	type PGType struct {
+		ID int64 `db:"id,omitempty"`
+
+		UInt8Value      uint8Compat      `db:"uint8_value"`
+		UInt8ValueArray uint8CompatArray `db:"uint8_value_array"`
+
+		Int64Value      int64Compat      `db:"int64_value"`
+		Int64ValueArray int64CompatArray `db:"int64_value_array"`
+
+		IntegerArray Int64Array  `db:"integer_array"`
+		StringArray  StringArray `db:"string_array,stringarray"`
+		JSONBMap     JSONBMap    `db:"jsonb_map"`
+
+		PGTypeInline `db:",inline"`
+
+		PGTypeAutoInline `db:",inline"`
+
+		JSONBObject JSONB      `db:"jsonb_object"`
+		JSONBArray  JSONBArray `db:"jsonb_array"`
+
+		CustomJSONBObject     customJSONB     `db:"custom_jsonb_object"`
+		AutoCustomJSONBObject autoCustomJSONB `db:"auto_custom_jsonb_object"`
+
+		CustomJSONBObjectPtr     *customJSONB     `db:"custom_jsonb_object_ptr,omitempty"`
+		AutoCustomJSONBObjectPtr *autoCustomJSONB `db:"auto_custom_jsonb_object_ptr,omitempty"`
+
+		AutoCustomJSONBObjectArray []autoCustomJSONB          `db:"auto_custom_jsonb_object_array"`
+		AutoCustomJSONBObjectMap   map[string]autoCustomJSONB `db:"auto_custom_jsonb_object_map"`
+
+		StringValue  string  `db:"string_value"`
+		IntegerValue int64   `db:"integer_value"`
+		VarcharValue string  `db:"varchar_value"`
+		DecimalValue float64 `db:"decimal_value"`
+
+		Int64CompatValue  int64Compat  `db:"integer_compat_value"`
+		UIntCompatValue   uintCompat   `db:"uinteger_compat_value"`
+		StringCompatValue stringCompat `db:"string_compat_value"`
+
+		Int64CompatValueJSONBArray  []int64Compat   `db:"integer_compat_value_jsonb_array"`
+		UIntCompatValueJSONBArray   uintCompatArray `db:"uinteger_compat_value_jsonb_array"`
+		StringCompatValueJSONBArray []stringCompat  `db:"string_compat_value_jsonb_array"`
+
+		StringValuePtr  *string  `db:"string_value_ptr,omitempty"`
+		IntegerValuePtr *int64   `db:"integer_value_ptr,omitempty"`
+		VarcharValuePtr *string  `db:"varchar_value_ptr,omitempty"`
+		DecimalValuePtr *float64 `db:"decimal_value_ptr,omitempty"`
+	}
+
+	integerValue := int64(10)
+	stringValue := string("ten")
+	decimalValue := float64(10.0)
+
+	integerArrayValue := Int64Array{1, 2, 3, 4}
+	stringArrayValue := StringArray{"a", "b", "c"}
+	jsonbMapValue := JSONBMap{"Hello": "World"}
+
+	testValue := "Hello world!"
+
+	origPgTypeTests := []PGType{
+		PGType{
+			UInt8Value:      7,
+			UInt8ValueArray: uint8CompatArray{1, 2, 3, 4, 5, 6},
+		},
+		PGType{
+			Int64Value:      -1,
+			Int64ValueArray: int64CompatArray{1, 2, 3, -4, 5, 6},
+		},
+		PGType{
+			UInt8Value:      1,
+			UInt8ValueArray: uint8CompatArray{1, 2, 3, 4, 5, 6},
+		},
+		PGType{
+			Int64Value:      1,
+			Int64ValueArray: int64CompatArray{7, 7, 7},
+		},
+		PGType{
+			Int64Value:      1,
+			Int64ValueArray: int64CompatArray{},
+		},
+		PGType{
+			Int64Value:      99,
+			Int64ValueArray: nil,
+		},
+		PGType{
+			Int64CompatValue:  -5,
+			UIntCompatValue:   3,
+			StringCompatValue: "abc",
+		},
+		PGType{
+			Int64CompatValueJSONBArray:  []int64Compat{1, -2, 3, -4},
+			UIntCompatValueJSONBArray:   []uintCompat{1, 2, 3, 4},
+			StringCompatValueJSONBArray: []stringCompat{"a", "b", "", "c"},
+		},
+		PGType{
+			Int64CompatValueJSONBArray:  []int64Compat(nil),
+			UIntCompatValueJSONBArray:   []uintCompat(nil),
+			StringCompatValueJSONBArray: []stringCompat(nil),
+		},
+		PGType{
+			IntegerValuePtr: &integerValue,
+			StringValuePtr:  &stringValue,
+			DecimalValuePtr: &decimalValue,
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoJSONBMapString:  map[string]string{"a": "x", "b": "67"},
+				AutoJSONBMapInteger: map[string]int64{"a": 12, "b": 13},
+			},
+		},
+		PGType{
+			IntegerValue: integerValue,
+			StringValue:  stringValue,
+			DecimalValue: decimalValue,
+		},
+		PGType{
+			IntegerArray: []int64{1, 2, 3, 4},
+		},
+		PGType{
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoIntegerArray: Int64Array{1, 2, 3, 4},
+				AutoStringArray:  nil,
+			},
+		},
+		PGType{
+			AutoCustomJSONBObjectArray: []autoCustomJSONB{
+				autoCustomJSONB{
+					N: "Hello",
+				},
+				autoCustomJSONB{
+					N: "World",
+				},
+			},
+			AutoCustomJSONBObjectMap: map[string]autoCustomJSONB{
+				"a": autoCustomJSONB{
+					N: "Hello",
+				},
+				"b": autoCustomJSONB{
+					N: "World",
+				},
+			},
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoJSONBMap: map[string]interface{}{
+					"Hello": "world",
+					"Roses": "red",
+				},
+			},
+			JSONBArray: JSONBArray{float64(1), float64(2), float64(3), float64(4)},
+		},
+		PGType{
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoIntegerArray: nil,
+			},
+		},
+		PGType{
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoJSONBMap: map[string]interface{}{},
+			},
+			JSONBArray: JSONBArray{},
+		},
+		PGType{
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoJSONBMap: map[string]interface{}(nil),
+			},
+			JSONBArray: JSONBArray(nil),
+		},
+		PGType{
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoStringArray: []string{"aaa", "bbb", "ccc"},
+			},
+		},
+		PGType{
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoStringArray: nil,
+			},
+		},
+		PGType{
+			PGTypeAutoInline: PGTypeAutoInline{
+				AutoJSONBMap: map[string]interface{}{"hello": "world!"},
+			},
+		},
+		PGType{
+			IntegerArray: []int64{1, 2, 3, 4},
+			StringArray:  []string{"a", "boo", "bar"},
+		},
+		PGType{
+			StringValue:  stringValue,
+			DecimalValue: decimalValue,
+		},
+		PGType{
+			IntegerArray: []int64{},
+		},
+		PGType{
+			StringArray: []string{},
+		},
+		PGType{
+			IntegerArray: []int64{},
+			StringArray:  []string{},
+		},
+		PGType{},
+		PGType{
+			IntegerArray: []int64{1},
+			StringArray:  []string{"a"},
+		},
+		PGType{
+			PGTypeInline: PGTypeInline{
+				IntegerArrayPtr: &integerArrayValue,
+				StringArrayPtr:  &stringArrayValue,
+				JSONBMapPtr:     &jsonbMapValue,
+			},
+		},
+		PGType{
+			IntegerArray: []int64{0, 0, 0, 0},
+			StringValue:  testValue,
+			CustomJSONBObject: customJSONB{
+				N: "Hello",
+			},
+			AutoCustomJSONBObject: autoCustomJSONB{
+				N: "World",
+			},
+			StringArray: []string{"", "", "", ``, `""`},
+		},
+		PGType{
+			CustomJSONBObject:     customJSONB{},
+			AutoCustomJSONBObject: autoCustomJSONB{},
+		},
+		PGType{
+			CustomJSONBObject: customJSONB{
+				N: "Hello 1",
+			},
+			AutoCustomJSONBObject: autoCustomJSONB{
+				N: "World 2",
+			},
+		},
+		PGType{
+			CustomJSONBObjectPtr:     nil,
+			AutoCustomJSONBObjectPtr: nil,
+		},
+		PGType{
+			CustomJSONBObjectPtr:     &customJSONB{},
+			AutoCustomJSONBObjectPtr: &autoCustomJSONB{},
+		},
+		PGType{
+			CustomJSONBObjectPtr: &customJSONB{
+				N: "Hello 3",
+			},
+			AutoCustomJSONBObjectPtr: &autoCustomJSONB{
+				N: "World 4",
+			},
+		},
+		PGType{
+			StringValue: testValue,
+		},
+		PGType{
+			IntegerValue:    integerValue,
+			IntegerValuePtr: &integerValue,
+			CustomJSONBObject: customJSONB{
+				V: 4.4,
+			},
+		},
+		PGType{
+			StringArray: []string{"a", "boo", "bar"},
+		},
+		PGType{
+			StringArray:       []string{"a", "boo", "bar", `""`},
+			CustomJSONBObject: customJSONB{},
+		},
+		PGType{
+			IntegerArray: []int64{0},
+			StringArray:  []string{""},
+		},
+		PGType{
+			CustomJSONBObject: customJSONB{
+				N: "Peter",
+				V: 5.56,
+			},
+		},
+	}
+
+	for i := 0; i < 100; i++ {
+
+		pgTypeTests := make([]PGType, len(origPgTypeTests))
+		perm := rand.Perm(len(origPgTypeTests))
+		for i, v := range perm {
+			pgTypeTests[v] = origPgTypeTests[i]
+		}
+
+		for i := range pgTypeTests {
+			id, err := sess.Collection("pg_types").Insert(pgTypeTests[i])
+			assert.NoError(t, err)
+
+			var actual PGType
+			err = sess.Collection("pg_types").Find(id).One(&actual)
+			assert.NoError(t, err)
+
+			expected := pgTypeTests[i]
+			expected.ID = id.(int64)
+			assert.Equal(t, expected, actual)
+		}
+
+		for i := range pgTypeTests {
+			row, err := sess.InsertInto("pg_types").Values(pgTypeTests[i]).Returning("id").QueryRow()
+			assert.NoError(t, err)
+
+			var id int64
+			err = row.Scan(&id)
+			assert.NoError(t, err)
+
+			var actual PGType
+			err = sess.Collection("pg_types").Find(id).One(&actual)
+			assert.NoError(t, err)
+
+			expected := pgTypeTests[i]
+			expected.ID = id
+
+			assert.Equal(t, expected, actual)
+
+			var actual2 PGType
+			err = sess.SelectFrom("pg_types").Where("id = ?", id).One(&actual2)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, actual2)
+		}
+
+		inserter := sess.InsertInto("pg_types")
+		for i := range pgTypeTests {
+			inserter = inserter.Values(pgTypeTests[i])
+		}
+		_, err := inserter.Exec()
+		assert.NoError(t, err)
+
+		err = sess.Collection("pg_types").Truncate()
+		assert.NoError(t, err)
+
+		batch := sess.InsertInto("pg_types").Batch(50)
+		go func() {
+			defer batch.Done()
+			for i := range pgTypeTests {
+				batch.Values(pgTypeTests[i])
+			}
+		}()
+
+		err = batch.Wait()
+		assert.NoError(t, err)
+
+		var values []PGType
+		err = sess.SelectFrom("pg_types").All(&values)
+		assert.NoError(t, err)
+
+		for i := range values {
+			expected := pgTypeTests[i]
+			expected.ID = values[i].ID
+			assert.Equal(t, expected, values[i])
+		}
+	}
+}
+
 func TestOptionTypes(t *testing.T) {
 	sess := mustOpen()
 	defer sess.Close()
@@ -207,8 +693,8 @@ func TestOptionTypes(t *testing.T) {
 	type optionType struct {
 		ID       int64                  `db:"id,omitempty"`
 		Name     string                 `db:"name"`
-		Tags     []string               `db:"tags,stringarray"`
-		Settings map[string]interface{} `db:"settings,jsonb"`
+		Tags     []string               `db:"tags"`
+		Settings map[string]interface{} `db:"settings"`
 	}
 
 	// Item 1
@@ -274,10 +760,10 @@ func TestOptionTypes(t *testing.T) {
 
 	// An option type to pointer jsonb field
 	type optionType2 struct {
-		ID       int64                   `db:"id,omitempty"`
-		Name     string                  `db:"name"`
-		Tags     []string                `db:"tags,stringarray"`
-		Settings *map[string]interface{} `db:"settings,jsonb"`
+		ID       int64       `db:"id,omitempty"`
+		Name     string      `db:"name"`
+		Tags     StringArray `db:"tags"`
+		Settings *JSONBMap   `db:"settings"`
 	}
 
 	item2 := optionType2{
@@ -304,7 +790,7 @@ func TestOptionTypes(t *testing.T) {
 	assert.Equal(t, len(item2Chk.Tags), len(item2.Tags))
 
 	// Update the value
-	m := map[string]interface{}{}
+	m := JSONBMap{}
 	m["lang"] = "javascript"
 	m["num"] = 31337
 	item2.Settings = &m
@@ -320,16 +806,16 @@ func TestOptionTypes(t *testing.T) {
 
 	// An option type to pointer string array field
 	type optionType3 struct {
-		ID       int64                  `db:"id,omitempty"`
-		Name     string                 `db:"name"`
-		Tags     *[]string              `db:"tags,stringarray"`
-		Settings map[string]interface{} `db:"settings,jsonb"`
+		ID       int64        `db:"id,omitempty"`
+		Name     string       `db:"name"`
+		Tags     *StringArray `db:"tags"`
+		Settings JSONBMap     `db:"settings"`
 	}
 
 	item3 := optionType3{
 		Name:     "Julia",
 		Tags:     nil,
-		Settings: map[string]interface{}{"girl": true, "lang": true},
+		Settings: JSONBMap{"girl": true, "lang": true},
 	}
 
 	id, err = optionTypes.Insert(item3)
@@ -344,6 +830,18 @@ func TestOptionTypes(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+type Settings struct {
+	Name string `json:"name"`
+	Num  int64  `json:"num"`
+}
+
+func (s *Settings) Scan(src interface{}) error {
+	return ScanJSONB(s, src)
+}
+func (s Settings) Value() (driver.Value, error) {
+	return JSONBValue(s)
+}
+
 func TestOptionTypeJsonbStruct(t *testing.T) {
 	sess := mustOpen()
 	defer sess.Close()
@@ -353,18 +851,11 @@ func TestOptionTypeJsonbStruct(t *testing.T) {
 	err := optionTypes.Truncate()
 	assert.NoError(t, err)
 
-	// A struct with wrapped option types defined in the struct tags
-	// for postgres string array and jsonb types
-	type Settings struct {
-		Name string `json:"name"`
-		Num  int64  `json:"num"`
-	}
-
 	type OptionType struct {
-		ID       int64    `db:"id,omitempty"`
-		Name     string   `db:"name"`
-		Tags     []string `db:"tags,stringarray"`
-		Settings Settings `db:"settings,jsonb"`
+		ID       int64       `db:"id,omitempty"`
+		Name     string      `db:"name"`
+		Tags     StringArray `db:"tags"`
+		Settings Settings    `db:"settings"`
 	}
 
 	item1 := &OptionType{
@@ -403,174 +894,6 @@ func TestSchemaCollection(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(dump))
 	assert.Equal(t, 9, dump[0]["id"])
-}
-
-func TestPgTypes(t *testing.T) {
-	type PGType struct {
-		ID int64 `db:"id,omitempty"`
-
-		IntegerArray []int64  `db:"integer_array,int64array"`
-		StringValue  *string  `db:"string_value,omitempty"`
-		StringArray  []string `db:"string_array,stringarray"`
-
-		Field1 *int64   `db:"field1,omitempty"`
-		Field2 *string  `db:"field2,omitempty"`
-		Field3 *float64 `db:"field3,omitempty"`
-
-		AutoIntegerArray Int64Array  `db:"auto_integer_array"`
-		AutoStringArray  StringArray `db:"auto_string_array"`
-		AutoJSONB        JSONB       `db:"auto_jsonb"`
-
-		AutoIntegerArrayPtr *Int64Array  `db:"auto_integer_array_ptr,omitempty"`
-		AutoStringArrayPtr  *StringArray `db:"auto_string_array_ptr,omitempty"`
-		AutoJSONBPtr        *JSONB       `db:"auto_jsonb_ptr,omitempty"`
-	}
-
-	field1 := int64(10)
-	field2 := string("ten")
-	field3 := float64(10.0)
-
-	testValue := "Hello world!"
-
-	origPgTypeTests := []PGType{
-		PGType{
-			Field1: &field1,
-			Field2: &field2,
-			Field3: &field3,
-		},
-		PGType{
-			IntegerArray: []int64{1, 2, 3, 4},
-		},
-		PGType{
-			AutoIntegerArray:    Int64Array{1, 2, 3, 4},
-			AutoIntegerArrayPtr: nil,
-		},
-		PGType{
-			AutoIntegerArray:    nil,
-			AutoIntegerArrayPtr: &Int64Array{4, 5, 6, 7},
-		},
-		PGType{
-			AutoStringArray:    StringArray{"aaa", "bbb", "ccc"},
-			AutoStringArrayPtr: nil,
-		},
-		PGType{
-			AutoStringArray:    nil,
-			AutoStringArrayPtr: &StringArray{"ddd", "eee", "ffff"},
-		},
-		PGType{
-			AutoJSONB:    JSONB{map[string]interface{}{"hello": "world!"}},
-			AutoJSONBPtr: nil,
-		},
-		PGType{
-			AutoJSONB:    JSONB{nil},
-			AutoJSONBPtr: &JSONB{[]interface{}{float64(9), float64(9), float64(9)}},
-		},
-		PGType{
-			IntegerArray: []int64{1, 2, 3, 4},
-			StringArray:  []string{"a", "boo", "bar"},
-		},
-		PGType{
-			Field2: &field2,
-			Field3: &field3,
-		},
-		PGType{
-			IntegerArray: []int64{},
-		},
-		PGType{
-			StringArray: []string{},
-		},
-		PGType{
-			IntegerArray: []int64{},
-			StringArray:  []string{},
-		},
-		PGType{},
-		PGType{
-			IntegerArray: []int64{1},
-			StringArray:  []string{"a"},
-		},
-		PGType{
-			IntegerArray: []int64{0, 0, 0, 0},
-			StringValue:  &testValue,
-			StringArray:  []string{"", "", "", ``, `""`},
-		},
-		PGType{
-			StringValue: &testValue,
-		},
-		PGType{
-			Field1: &field1,
-		},
-		PGType{
-			StringArray: []string{"a", "boo", "bar"},
-		},
-		PGType{
-			StringArray: []string{"a", "boo", "bar", `""`},
-		},
-		PGType{
-			IntegerArray: []int64{0},
-			StringArray:  []string{""},
-		},
-	}
-
-	sess := mustOpen()
-	defer sess.Close()
-
-	for i := 0; i < 100; i++ {
-
-		pgTypeTests := make([]PGType, len(origPgTypeTests))
-		perm := rand.Perm(len(origPgTypeTests))
-		for i, v := range perm {
-			pgTypeTests[v] = origPgTypeTests[i]
-		}
-
-		for i := range pgTypeTests {
-			id, err := sess.Collection("pg_types").Insert(pgTypeTests[i])
-			assert.NoError(t, err)
-
-			var actual PGType
-			err = sess.Collection("pg_types").Find(id).One(&actual)
-			assert.NoError(t, err)
-
-			expected := pgTypeTests[i]
-			expected.ID = id.(int64)
-			assert.Equal(t, expected, actual)
-		}
-
-		for i := range pgTypeTests {
-			row, err := sess.InsertInto("pg_types").Values(pgTypeTests[i]).Returning("id").QueryRow()
-			assert.NoError(t, err)
-
-			var id int64
-			err = row.Scan(&id)
-			assert.NoError(t, err)
-
-			var actual PGType
-			err = sess.Collection("pg_types").Find(id).One(&actual)
-			assert.NoError(t, err)
-
-			expected := pgTypeTests[i]
-			expected.ID = id
-
-			assert.Equal(t, expected, actual)
-		}
-
-		inserter := sess.InsertInto("pg_types")
-		for i := range pgTypeTests {
-			inserter = inserter.Values(pgTypeTests[i])
-		}
-		_, err := inserter.Exec()
-		assert.NoError(t, err)
-
-		batch := sess.InsertInto("pg_types").Batch(50)
-		go func() {
-			defer batch.Done()
-			for i := range pgTypeTests {
-				batch.Values(pgTypeTests[i])
-			}
-		}()
-
-		err = batch.Wait()
-		assert.NoError(t, err)
-	}
 }
 
 func TestMaxOpenConns_Issue340(t *testing.T) {
@@ -689,6 +1012,60 @@ func TestUUIDInsert_Issue370(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, item1.Name, item3.Name)
 	}
+}
+
+func TestEscapeQuestionMark(t *testing.T) {
+	sess := mustOpen()
+	defer sess.Close()
+
+	var val bool
+
+	{
+		res, err := sess.QueryRow(`SELECT '{"mykey":["val1", "val2"]}'::jsonb->'mykey' ?? ?`, "val2")
+		assert.NoError(t, err)
+
+		err = res.Scan(&val)
+		assert.NoError(t, err)
+		assert.Equal(t, true, val)
+	}
+
+	{
+		res, err := sess.QueryRow(`SELECT ?::jsonb->'mykey' ?? ?`, `{"mykey":["val1", "val2"]}`, `val2`)
+		assert.NoError(t, err)
+
+		err = res.Scan(&val)
+		assert.NoError(t, err)
+		assert.Equal(t, true, val)
+	}
+
+	{
+		res, err := sess.QueryRow(`SELECT ?::jsonb->? ?? ?`, `{"mykey":["val1", "val2"]}`, `mykey`, `val2`)
+		assert.NoError(t, err)
+
+		err = res.Scan(&val)
+		assert.NoError(t, err)
+		assert.Equal(t, true, val)
+	}
+}
+
+func TestTextMode_Issue391(t *testing.T) {
+	sess := mustOpen()
+	defer sess.Close()
+
+	testPostgreSQLTypes(t, sess)
+}
+
+func TestBinaryMode_Issue391(t *testing.T) {
+	settingsWithBinaryMode := settings
+	settingsWithBinaryMode.Options["binary_parameters"] = "yes"
+
+	sess, err := Open(settingsWithBinaryMode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+
+	testPostgreSQLTypes(t, sess)
 }
 
 func getStats(sess sqlbuilder.Database) (map[string]int, error) {

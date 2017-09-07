@@ -100,14 +100,14 @@ type (
 )
 
 func init() {
-	centipede.AddCrawler(&QingTing{
-		items.Crawler{
-			Name:         "蜻蜓",
-			Thread:       10,
-			Limit:        5,
-			DisableProxy: false,
-		},
-	})
+	//centipede.AddCrawler(&QingTing{
+	//	items.Crawler{
+	//		Name:         "蜻蜓",
+	//		Thread:       10,
+	//		Limit:        5,
+	//		DisableProxy: false,
+	//	},
+	//})
 }
 
 func (this *QingTing) Parse(params map[string]string) {
