@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/LSvKing/centipede/centipede"
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/request"
+	"centipede/config"
+
+	"centipede/centipede"
+	"centipede/items"
+	"centipede/request"
 )
 
 type TestCrawler struct {
@@ -14,24 +16,20 @@ type TestCrawler struct {
 }
 
 func init() {
-	centipede.AddCrawler(&TestCrawler{
-		items.Crawler{
-			Name:         "Test",
-			Thread:       10,
-			Limit:        5,
-			DisableProxy: false,
-		},
-	})
+	//centipede.AddCrawler(&TestCrawler{
+	//	items.Crawler{
+	//		Name:         "Test",
+	//		Thread:       10,
+	//		Limit:        5,
+	//		DisableProxy: false,
+	//	},
+	//})
 }
 
 func (this *TestCrawler) Parse(params map[string]string) {
-	centipede.AddData(
-		items.Data{
-			struct {
-				Field string
-				Value interface{}
-			}{Field: "ttt", Value: "ssss"},
-		}, "test")
+	centipede.AddData([]items.Data{
+		{Field: "test", Value: "TEST"},
+	}, "test")
 
 	centipede.AddRequest(request.NewRequest("http://baidu.com").SetCallback("ParseItem"))
 	centipede.AddRequest(request.NewRequest("http://baidu.com").SetCallback("ParseItem"))
@@ -51,7 +49,7 @@ func (this *TestCrawler) Option() items.Crawler {
 }
 
 func (this *TestCrawler) Pipeline(data items.DataRow) {
-
+	fmt.Println(config.Get().Mongo.Host)
 	fmt.Println("Is Test Pipeline ", data)
 }
 

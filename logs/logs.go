@@ -1,7 +1,7 @@
 package logs
 
 import (
-	"github.com/LSvKing/centipede/config"
+	"centipede/config"
 	"github.com/sirupsen/logrus"
 	"github.com/weekface/mgorus"
 )

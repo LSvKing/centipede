@@ -1,6 +1,6 @@
 package output
 
-import "github.com/LSvKing/centipede/items"
+import "centipede/items"
 
 type Output interface {
 	OutPut(cache items.DataCache)

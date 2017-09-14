@@ -8,14 +8,16 @@ import (
 type (
 	DataCache []DataRow
 
-	Data []struct {
+	Data struct {
 		Field string
 		Value interface{}
 	}
 
+	D []Data
+
 	DataRow struct {
 		Collection string
-		Data
+		Data       []Data
 	}
 
 	FileRow struct {

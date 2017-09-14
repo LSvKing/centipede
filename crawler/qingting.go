@@ -10,9 +10,9 @@ import (
 
 	"strconv"
 
-	"github.com/LSvKing/centipede/centipede"
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/request"
+	"centipede/centipede"
+	"centipede/items"
+	"centipede/request"
 )
 
 type (
@@ -194,13 +194,12 @@ func (this *QingTing) ParseItem(response *http.Response) {
 
 	json.Unmarshal(body, &item)
 
-	centipede.AddData(
-		items.Data{
-			struct {
-				Field string
-				Value interface{}
-			}{Field: "data", Value: item},
-		}, "qingting")
+	centipede.AddData([]items.Data{
+		{
+			Field: "data",
+			Value: item,
+		},
+	}, "qingting")
 
 }
 

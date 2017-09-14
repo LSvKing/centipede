@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/logs"
+	"centipede/items"
+	"centipede/logs"
 )
 
 var log = logs.New()
@@ -29,7 +29,7 @@ type (
 
 var fileOutPath = "/Users/lsvking/WorkSpace/file/"
 
-func (pipeline *Pipeline) AddData(data items.Data, collection string) {
+func (pipeline *Pipeline) AddData(data []items.Data, collection string) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Fatal(err)
@@ -38,10 +38,7 @@ func (pipeline *Pipeline) AddData(data items.Data, collection string) {
 
 	t := time.Now()
 
-	times := struct {
-		Field string
-		Value interface{}
-	}{
+	times := items.Data{
 		Field: "time",
 		Value: t.Format("2006-01-02 15:04:05"),
 	}
@@ -76,7 +73,6 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 	//dataCache := make(items.DataCache,0,pipeline.CacheSize)
 
 	//go func() {
-
 
 	//TODO
 	//Pipeline chanel 没有销毁

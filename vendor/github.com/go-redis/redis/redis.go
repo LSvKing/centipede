@@ -3,6 +3,7 @@ package redis
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/go-redis/redis/internal"
@@ -12,6 +13,10 @@ import (
 
 // Redis nil reply, .e.g. when key does not exist.
 const Nil = internal.Nil
+
+func init() {
+	SetLogger(log.New(os.Stderr, "redis: ", log.LstdFlags|log.Lshortfile))
+}
 
 func SetLogger(logger *log.Logger) {
 	internal.Logger = logger
@@ -347,17 +352,12 @@ func (c *Client) Options() *Options {
 	return c.opt
 }
 
+type PoolStats pool.Stats
+
 // PoolStats returns connection pool stats.
 func (c *Client) PoolStats() *PoolStats {
-	s := c.connPool.Stats()
-	return &PoolStats{
-		Requests: s.Requests,
-		Hits:     s.Hits,
-		Timeouts: s.Timeouts,
-
-		TotalConns: s.TotalConns,
-		FreeConns:  s.FreeConns,
-	}
+	stats := c.connPool.Stats()
+	return (*PoolStats)(stats)
 }
 
 func (c *Client) Pipelined(fn func(Pipeliner) error) ([]Cmder, error) {

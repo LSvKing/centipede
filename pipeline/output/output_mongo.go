@@ -1,8 +1,8 @@
 package output
 
 import (
-	"github.com/LSvKing/centipede/config"
-	"github.com/LSvKing/centipede/items"
+	"centipede/config"
+	"centipede/items"
 	"upper.io/db.v3"
 	"upper.io/db.v3/mongo"
 	//"fmt"

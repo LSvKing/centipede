@@ -3,8 +3,8 @@ package output
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/logs"
+	"centipede/items"
+	"centipede/logs"
 	"os"
 )
 

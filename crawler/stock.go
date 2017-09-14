@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/LSvKing/centipede/centipede"
-	"github.com/LSvKing/centipede/config"
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/request"
+	"centipede/centipede"
+	"centipede/config"
+	"centipede/items"
+	"centipede/request"
 
 	"github.com/davecgh/go-spew/spew"
 	"upper.io/db.v3/mongo"

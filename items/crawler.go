@@ -16,6 +16,7 @@ type Crawler struct {
 	Thread       uint
 	DisableProxy bool
 	ProxyList    []Proxy
+	AutoRun      bool
 }
 
 func (crawler Crawler) Register() Crawler {

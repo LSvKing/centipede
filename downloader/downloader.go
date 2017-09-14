@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/LSvKing/centipede/config"
-	"github.com/LSvKing/centipede/logs"
-	"github.com/LSvKing/centipede/request"
+	"centipede/config"
+	"centipede/logs"
+	"centipede/request"
 )
 
 var log = logs.New()

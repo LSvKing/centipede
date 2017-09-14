@@ -6,7 +6,7 @@ import (
 
 	"github.com/LSvKing/cron"
 	"github.com/nanobox-io/golang-scribble"
-	"github.com/LSvKing/centipede/centipede"
+	"centipede/centipede"
 )
 
 var (

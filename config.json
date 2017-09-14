@@ -10,10 +10,10 @@
     "ProxyHost" : "127.0.0.1",
     "ProxyPort" : "8878",
     "ProxyUser" : "",
-    "ProxyPassword" : "",
+    "ProxyPassword" : ""
   },
   "Redis":{
     "Host" :"localhost:6379",
-    "Db":0,
+    "Db":0
   }
 }

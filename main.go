@@ -3,12 +3,12 @@ package main
 import (
 	"net/http"
 
-	"github.com/LSvKing/centipede/centipede"
-	_ "github.com/LSvKing/centipede/crawler"
+	"centipede/centipede"
+	_ "centipede/crawler"
 	"github.com/gorilla/mux"
 	//"fmt"
-	//"github.com/LSvKing/centipede/job"
-	"github.com/LSvKing/centipede/service"
+	//"centipede/job"
+	"centipede/service"
 )
 
 func main() {

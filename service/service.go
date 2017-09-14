@@ -3,7 +3,7 @@ package service
 import (
 	"net/http"
 
-	"github.com/LSvKing/centipede/centipede"
+	"centipede/centipede"
 )
 
 func AddHandler(w http.ResponseWriter, r *http.Request) {

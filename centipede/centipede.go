@@ -15,14 +15,14 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"github.com/LSvKing/centipede/common"
-	"github.com/LSvKing/centipede/downloader"
-	"github.com/LSvKing/centipede/items"
-	"github.com/LSvKing/centipede/logs"
-	"github.com/LSvKing/centipede/pipeline"
-	"github.com/LSvKing/centipede/request"
-	"github.com/LSvKing/centipede/resource_manage"
-	"github.com/LSvKing/centipede/scheduler"
+	"centipede/common"
+	"centipede/downloader"
+	"centipede/items"
+	"centipede/logs"
+	"centipede/pipeline"
+	"centipede/request"
+	"centipede/resource_manage"
+	"centipede/scheduler"
 )
 
 type Centipede struct {
@@ -206,7 +206,10 @@ func Run() {
 
 func AddCrawler(crawler items.CrawlerEr) {
 	centipede.Crawlers[crawler.Option().Name] = crawler
-	PushCrawler(crawler.Option().Name)
+
+	if crawler.Option().AutoRun {
+		PushCrawler(crawler.Option().Name)
+	}
 }
 
 // AddRequest 添加请求
@@ -223,7 +226,7 @@ func AddCrawlerChan(crawlerName string) {
 }
 
 // AddData 添加数据
-func AddData(data items.Data, collection string) {
+func AddData(data []items.Data, collection string) {
 	defer func() {
 		if err := recover(); err != nil {
 			Log.Fatal(err)
@@ -232,10 +235,7 @@ func AddData(data items.Data, collection string) {
 
 	t := time.Now()
 
-	data = append(data, struct {
-		Field string
-		Value interface{}
-	}{
+	data = append(data, items.Data{
 		Field: "created",
 		Value: t.Format("2006-01-02 15:04:05"),
 	})
@@ -334,6 +334,11 @@ func PushCrawler(crawler string) {
 	} else {
 		Log.Errorln(crawler, "爬虫脚本不存在")
 	}
+}
+
+//同步请求
+func Downloader(res *request.Request) (*http.Response, error) {
+	return centipede.Downloader.Download(res)
 }
 
 func Close() {

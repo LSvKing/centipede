@@ -2,7 +2,7 @@ package output
 
 import (
 	"fmt"
-	"github.com/LSvKing/centipede/items"
+	"centipede/items"
 )
 
 type OutputConsole struct {
