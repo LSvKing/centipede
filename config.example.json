@@ -1,0 +1,19 @@
+{
+  "Title":"Centipede",
+  "Mongo" :{
+    "Host" : "127.0.0.1",
+    "Post" : "27017",
+    "Database" : "douban"
+  },
+  "HttpClient":{
+    "ProxyDisable" : false,
+    "ProxyHost" : "127.0.0.1",
+    "ProxyPort" : "8878",
+    "ProxyUser" : "",
+    "ProxyPassword" : ""
+  },
+  "Redis":{
+    "Host" :"127.0.0.1:6379",
+    "Db":0
+  }
+}
