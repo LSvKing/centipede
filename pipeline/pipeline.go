@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"centipede/config"
 	"centipede/items"
 	"centipede/logs"
 )
@@ -27,7 +28,9 @@ type (
 	Data map[string]string
 )
 
-var fileOutPath = "/Users/lsvking/WorkSpace/file/"
+var appConfig = config.Get()
+
+var fileOutPath = appConfig.FilePath
 
 func (pipeline *Pipeline) AddData(data []items.Data, collection string) {
 	defer func() {

@@ -1,5 +1,6 @@
 {
   "Title":"Centipede",
+  "FilePath" : "/data/",
   "Mongo" :{
     "Host" : "127.0.0.1",
     "Post" : "27017",

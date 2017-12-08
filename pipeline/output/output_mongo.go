@@ -3,6 +3,7 @@ package output
 import (
 	"centipede/config"
 	"centipede/items"
+
 	"upper.io/db.v3"
 	"upper.io/db.v3/mongo"
 	//"fmt"
@@ -23,6 +24,11 @@ func (this *OutPutMongGo) OutPut(dataCache items.DataCache) {
 	var settings = mongo.ConnectionURL{
 		Host:     appConfig.Mongo.Host,     // server IP.
 		Database: appConfig.Mongo.Database, // Database name.
+	}
+
+	if appConfig.Mongo.UserName != "" {
+		settings.User = appConfig.Mongo.UserName
+		settings.Password = appConfig.Mongo.PassWord
 	}
 
 	sess, err := mongo.Open(settings)
