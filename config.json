@@ -1,6 +1,6 @@
 {
   "Title":"Centipede",
-  "FilePath" : "/Users/lsvking/WorkSpace/file/",
+  "FilePath" : "/Users/lsvking/WorkSpace/file",
   "Mongo" :{
     "Host" : "127.0.0.1",
     "Post" : "27017",
