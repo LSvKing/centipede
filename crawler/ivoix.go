@@ -65,6 +65,9 @@ func (this *Ivoix) Pipeline(data items.DataRow) {
 		Database: appConfig.Mongo.Database, // Database name.
 	}
 
+	settings.User = appConfig.Mongo.UserName
+	settings.Password = appConfig.Mongo.PassWord
+
 	sess, err := mongo.Open(settings)
 
 	if err != nil {

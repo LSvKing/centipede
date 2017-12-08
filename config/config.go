@@ -11,8 +11,8 @@ type (
 			Host     string `default:"127.0.0.1"`
 			Database string
 			Post     string `default:"27017"`
-			UserName string `default:""`
-			PassWord string `default:""`
+			UserName string
+			PassWord string
 		}
 		HttpClient struct {
 			ProxyDisable  bool    `default:false`
