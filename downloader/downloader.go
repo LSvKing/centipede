@@ -47,7 +47,7 @@ func New() *Downloader {
 func (downloader *Downloader) Download(req *request.Request) (*http.Response, error) {
 	log.Debug("Download")
 
-	httpReq, e := http.NewRequest(req.GetMethod(), req.GetUrl(), strings.NewReader(req.Params.Encode()))
+	httpReq, e := http.NewRequest(req.GetMethod(), req.GetUrl(), strings.NewReader(req.PostParams.Encode()))
 
 	if req.Header != nil {
 		httpReq.Header = req.Header
@@ -55,11 +55,10 @@ func (downloader *Downloader) Download(req *request.Request) (*http.Response, er
 
 	if req.GetMethod() == "POST" {
 		httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		//httpReq.Form = req.Params
 	}
 
 	if req.GetMethod() == "GET" {
-		httpReq.URL.RawQuery = req.Params.Encode()
+		httpReq.URL.RawQuery = req.PostParams.Encode()
 	}
 
 	httpReq.Close = true

@@ -36,9 +36,9 @@ var _ = Describe("Commands", func() {
 			Expect(cmds[0].Err()).To(MatchError("ERR Client sent AUTH, but no password is set"))
 			Expect(cmds[1].Err()).To(MatchError("ERR Client sent AUTH, but no password is set"))
 
-			stats := client.Pool().Stats()
-			Expect(stats.Requests).To(Equal(uint32(2)))
+			stats := client.PoolStats()
 			Expect(stats.Hits).To(Equal(uint32(1)))
+			Expect(stats.Misses).To(Equal(uint32(1)))
 			Expect(stats.Timeouts).To(Equal(uint32(0)))
 			Expect(stats.TotalConns).To(Equal(uint32(1)))
 			Expect(stats.FreeConns).To(Equal(uint32(1)))
@@ -1391,8 +1391,8 @@ var _ = Describe("Commands", func() {
 			Expect(client.Ping().Err()).NotTo(HaveOccurred())
 
 			stats := client.PoolStats()
-			Expect(stats.Requests).To(Equal(uint32(3)))
 			Expect(stats.Hits).To(Equal(uint32(1)))
+			Expect(stats.Misses).To(Equal(uint32(2)))
 			Expect(stats.Timeouts).To(Equal(uint32(0)))
 		})
 
@@ -1846,6 +1846,17 @@ var _ = Describe("Commands", func() {
 			sMembers := client.SMembers("set")
 			Expect(sMembers.Err()).NotTo(HaveOccurred())
 			Expect(sMembers.Val()).To(ConsistOf([]string{"Hello", "World"}))
+		})
+
+		It("should SMembersMap", func() {
+			sAdd := client.SAdd("set", "Hello")
+			Expect(sAdd.Err()).NotTo(HaveOccurred())
+			sAdd = client.SAdd("set", "World")
+			Expect(sAdd.Err()).NotTo(HaveOccurred())
+
+			sMembersMap := client.SMembersMap("set")
+			Expect(sMembersMap.Err()).NotTo(HaveOccurred())
+			Expect(sMembersMap.Val()).To(Equal(map[string]struct{}{"Hello": struct{}{}, "World": struct{}{}}))
 		})
 
 		It("should SMove", func() {

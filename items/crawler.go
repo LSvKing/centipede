@@ -1,6 +1,8 @@
 package items
 
 import (
+	"time"
+
 	"golang.org/x/time/rate"
 )
 
@@ -11,12 +13,14 @@ type CrawlerEr interface {
 }
 
 type Crawler struct {
-	Name         string
-	Limit        rate.Limit
-	Thread       uint
-	DisableProxy bool
-	ProxyList    []Proxy
-	AutoRun      bool
+	Name         string     `json:"name"`
+	Limit        rate.Limit `json:"limit"`
+	Thread       uint       `json:"thread"`
+	Timeout      time.Duration
+	DisableProxy bool              `json:"disableProxy"`
+	ProxyList    []Proxy           `json:"proxyList"`
+	AutoRun      bool              `json:"autoRun"`
+	CallParams   map[string]string `json:"params"`
 }
 
 func (crawler Crawler) Register() Crawler {
@@ -25,5 +29,4 @@ func (crawler Crawler) Register() Crawler {
 
 type CrawlerChan struct {
 	CrawlerEr
-	Params map[string]string
 }

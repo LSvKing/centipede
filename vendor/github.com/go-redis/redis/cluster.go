@@ -535,13 +535,13 @@ func (c *ClusterClient) cmdInfo(name string) *CommandInfo {
 
 func (c *ClusterClient) cmdSlot(cmd Cmder) int {
 	cmdInfo := c.cmdInfo(cmd.Name())
-	firstKey := cmd.arg(cmdFirstKeyPos(cmd, cmdInfo))
+	firstKey := cmd.stringArg(cmdFirstKeyPos(cmd, cmdInfo))
 	return hashtag.Slot(firstKey)
 }
 
 func (c *ClusterClient) cmdSlotAndNode(state *clusterState, cmd Cmder) (int, *clusterNode, error) {
 	cmdInfo := c.cmdInfo(cmd.Name())
-	firstKey := cmd.arg(cmdFirstKeyPos(cmd, cmdInfo))
+	firstKey := cmd.stringArg(cmdFirstKeyPos(cmd, cmdInfo))
 	slot := hashtag.Slot(firstKey)
 
 	if cmdInfo != nil && cmdInfo.ReadOnly && c.opt.ReadOnly {
@@ -656,7 +656,7 @@ func (c *ClusterClient) Process(cmd Cmder) error {
 			continue
 		}
 
-		if internal.IsRetryableError(err) {
+		if internal.IsRetryableError(err, true) {
 			var nodeErr error
 			node, nodeErr = c.nodes.Random()
 			if nodeErr != nil {
@@ -801,8 +801,8 @@ func (c *ClusterClient) PoolStats() *PoolStats {
 
 	for _, node := range state.masters {
 		s := node.Client.connPool.Stats()
-		acc.Requests += s.Requests
 		acc.Hits += s.Hits
+		acc.Misses += s.Misses
 		acc.Timeouts += s.Timeouts
 
 		acc.TotalConns += s.TotalConns
@@ -812,8 +812,8 @@ func (c *ClusterClient) PoolStats() *PoolStats {
 
 	for _, node := range state.slaves {
 		s := node.Client.connPool.Stats()
-		acc.Requests += s.Requests
 		acc.Hits += s.Hits
+		acc.Misses += s.Misses
 		acc.Timeouts += s.Timeouts
 
 		acc.TotalConns += s.TotalConns
@@ -895,7 +895,7 @@ func (c *ClusterClient) Pipeline() Pipeliner {
 }
 
 func (c *ClusterClient) Pipelined(fn func(Pipeliner) error) ([]Cmder, error) {
-	return c.Pipeline().pipelined(fn)
+	return c.Pipeline().Pipelined(fn)
 }
 
 func (c *ClusterClient) pipelineExec(cmds []Cmder) error {
@@ -1033,7 +1033,7 @@ func (c *ClusterClient) TxPipeline() Pipeliner {
 }
 
 func (c *ClusterClient) TxPipelined(fn func(Pipeliner) error) ([]Cmder, error) {
-	return c.TxPipeline().pipelined(fn)
+	return c.TxPipeline().Pipelined(fn)
 }
 
 func (c *ClusterClient) txPipelineExec(cmds []Cmder) error {

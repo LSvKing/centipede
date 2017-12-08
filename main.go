@@ -5,6 +5,7 @@ import (
 
 	"centipede/centipede"
 	_ "centipede/crawler"
+
 	"github.com/gorilla/mux"
 	//"fmt"
 	//"centipede/job"
@@ -15,9 +16,10 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", service.TestHandler)
+	//r.HandleFunc("/", service.TestHandler)
 	r.HandleFunc("/add", service.AddHandler)
 	r.HandleFunc("/close", service.CloseHandler)
+	r.HandleFunc("/crawlers", service.CrawlerList)
 	go http.ListenAndServe(":8000", r)
 
 	centipede.Run()

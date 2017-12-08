@@ -7,6 +7,7 @@ import (
 	"centipede/config"
 	"centipede/logs"
 	"centipede/request"
+
 	"github.com/go-redis/redis"
 )
 
@@ -26,6 +27,12 @@ func New() *Scheduler {
 		DB:   appConfig.Redis.Db,
 	})
 
+	_, err := client.Ping().Result()
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	return &Scheduler{locker, client}
 }
 
@@ -33,8 +40,6 @@ func (this *Scheduler) Push(r *request.Request) {
 	this.locker.Lock()
 
 	jsonReq, _ := json.Marshal(r)
-
-	log.Debug(r)
 
 	this.client.RPush("scheuler", jsonReq)
 

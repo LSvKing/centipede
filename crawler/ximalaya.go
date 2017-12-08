@@ -2,20 +2,19 @@ package crawler
 
 import (
 	"centipede/centipede"
+	"centipede/common"
 	"centipede/items"
 	"centipede/request"
+
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
-
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-
-	"centipede/common"
-
-	"io/ioutil"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -43,14 +42,14 @@ type (
 )
 
 func init() {
-	centipede.AddCrawler(&Ximalaya{
-		items.Crawler{
-			Name: "ximalaya",
-		},
-	})
+	//centipede.AddCrawler(&Ximalaya{
+	//	items.Crawler{
+	//		Name: "ximalaya",
+	//	},
+	//})
 }
 
-func (this *Ximalaya) Parse(params map[string]string) {
+func (this *Ximalaya) Parse(params url.Values) {
 	centipede.AddData([]items.Data{
 		{
 			Field: "t",
@@ -64,7 +63,7 @@ func (this *Ximalaya) Option() items.Crawler {
 }
 
 func (this *Ximalaya) Pipeline(data items.DataRow) {
-	var items []Item
+	//var items []Item
 }
 
 func (this *Ximalaya) ParseUrl(id string) {
@@ -171,6 +170,7 @@ func (this *Ximalaya) ParseList(response *http.Response) {
 }
 
 func (this *Ximalaya) ParseItem(response *http.Response) {
+	var items []Item
 
 	body, _ := ioutil.ReadAll(response.Body)
 
@@ -178,20 +178,20 @@ func (this *Ximalaya) ParseItem(response *http.Response) {
 
 	json.Unmarshal(body, &xiItem)
 
-	t, err := time.Parse("2006-01-02", strings.TrimSpace(selection.Find(".operate span").Text()))
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	pubDate := t.Format(time.RFC1123)
+	//t, err := time.Parse("2006-01-02", strings.TrimSpace(selection.Find(".operate span").Text()))
+	//
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//}
+	//
+	//pubDate := t.Format(time.RFC1123)
 
 	items = append(items, Item{
 		Title:    xiItem.Title,
 		Subtitle: xiItem.Title,
 		Author:   xiItem.NickName,
-		PubDate:  pubDate,
-		Summary:  xiItem.Intro,
+		//PubDate:  pubDate,
+		Summary: xiItem.Intro,
 		Guid: Guid{
 			IsPermaLink: "true",
 		},

@@ -64,6 +64,64 @@ func (col *Collection) Find(terms ...interface{}) db.Result {
 	return res
 }
 
+var comparisonOperators = map[db.ComparisonOperator]string{
+	db.ComparisonOperatorEqual:    "$eq",
+	db.ComparisonOperatorNotEqual: "$ne",
+
+	db.ComparisonOperatorLessThan:    "$lt",
+	db.ComparisonOperatorGreaterThan: "$gt",
+
+	db.ComparisonOperatorLessThanOrEqualTo:    "$lte",
+	db.ComparisonOperatorGreaterThanOrEqualTo: "$gte",
+
+	db.ComparisonOperatorIn:    "$in",
+	db.ComparisonOperatorNotIn: "$nin",
+}
+
+func compare(field string, cmp db.Comparison) (string, interface{}) {
+	op := cmp.Operator()
+	value := cmp.Value()
+
+	switch op {
+	case db.ComparisonOperatorEqual:
+		return field, value
+	case db.ComparisonOperatorBetween:
+		values := value.([]interface{})
+		return field, bson.M{
+			"$gte": values[0],
+			"$lte": values[1],
+		}
+	case db.ComparisonOperatorNotBetween:
+		values := value.([]interface{})
+		return "$or", []bson.M{
+			{field: bson.M{"$gt": values[1]}},
+			{field: bson.M{"$lt": values[0]}},
+		}
+	case db.ComparisonOperatorIs:
+		if value == nil {
+			return field, bson.M{"$exists": false}
+		}
+		return field, bson.M{"$eq": value}
+	case db.ComparisonOperatorIsNot:
+		if value == nil {
+			return field, bson.M{"$exists": true}
+		}
+		return field, bson.M{"$ne": value}
+	case db.ComparisonOperatorRegExp, db.ComparisonOperatorLike:
+		return field, bson.RegEx{value.(string), ""}
+	case db.ComparisonOperatorNotRegExp, db.ComparisonOperatorNotLike:
+		return field, bson.M{"$not": bson.RegEx{value.(string), ""}}
+	}
+
+	if cmpOp, ok := comparisonOperators[op]; ok {
+		return field, bson.M{
+			cmpOp: value,
+		}
+	}
+
+	panic(fmt.Sprintf("Unsupported operator %v", op))
+}
+
 // compileStatement transforms conditions into something *mgo.Session can
 // understand.
 func compileStatement(cond db.Cond) bson.M {
@@ -71,12 +129,16 @@ func compileStatement(cond db.Cond) bson.M {
 
 	// Walking over conditions
 	for fieldI, value := range cond {
-		// Removing leading or trailing spaces.
 		field := strings.TrimSpace(fmt.Sprintf("%v", fieldI))
 
-		chunks := strings.SplitN(field, ` `, 2)
+		if cmp, ok := value.(db.Comparison); ok {
+			k, v := compare(field, cmp)
+			conds[k] = v
+			continue
+		}
 
 		var op string
+		chunks := strings.SplitN(field, ` `, 2)
 
 		if len(chunks) > 1 {
 			switch chunks[1] {
@@ -96,13 +158,13 @@ func compileStatement(cond db.Cond) bson.M {
 				op = chunks[1]
 			}
 		}
+		field = chunks[0]
 
 		if op == "" {
-			conds[chunks[0]] = value
+			conds[field] = value
 		} else {
-			conds[chunks[0]] = bson.M{op: value}
+			conds[field] = bson.M{op: value}
 		}
-
 	}
 
 	return conds

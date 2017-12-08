@@ -46,6 +46,10 @@ var (
 	Log = logs.New()
 )
 
+func GetCentipede() *Centipede {
+	return &centipede
+}
+
 func Run() {
 	defer func() {
 		if p := recover(); p != nil {
@@ -83,13 +87,13 @@ func Run() {
 
 			mc := resource_manage.NewResourceManageChan(crawler.Option().Thread)
 
-			crawler.Parse(crawlerChan.Params)
+			crawler.Parse(crawler.Option().CallParams)
 
 			transport := &http.Transport{
 				DisableKeepAlives: true,
 			}
 
-			funcMap := make(map[string]reflect.Value, 100)
+			//funcMap := make(map[string]reflect.Value, 100)
 
 			var limiter *rate.Limiter
 
@@ -125,10 +129,14 @@ func Run() {
 						mc.FreeOne()
 					}()
 
+					if crawler.Option().Timeout > 0 {
+						centipede.Downloader.Client.Timeout = crawler.Option().Timeout
+					}
+
 					if crawler.Option().DisableProxy {
 
 						if len(crawler.Option().ProxyList) < 1 {
-							Log.Error("代理持为空")
+							Log.Error("代理池为空")
 						}
 
 						var rawProxy string
@@ -170,25 +178,21 @@ func Run() {
 
 						}()
 
-						Log.Debug("get finsh")
+						Log.Debugln("get finsh")
 
-						params := make([]reflect.Value, 1)
-						params[0] = reflect.ValueOf(resp)
+						//通过反射执行 回调函数
+						params := make([]reflect.Value, 0)
 
-						if callFunc, ok := funcMap[req.Callback]; ok {
-							callFunc.Call(params)
-						} else {
-							r := reflect.ValueOf(crawler)
+						//取 resp 参数放入执行参数
+						params = append(params, reflect.ValueOf(resp))
 
-							if r.MethodByName(req.Callback).IsValid() == false {
-								Log.Error(req)
-								Log.Errorf(req.Callback + "回调函数不存在")
-							} else {
-								funcMap[req.Callback] = r.MethodByName(req.Callback)
-								funcMap[req.Callback].Call(params)
-							}
-
+						//如果回调请求设置了 自定义参数 加入自定义参数到执行参数
+						if req.CallParams != nil {
+							params = append(params, reflect.ValueOf(req.CallParams))
 						}
+
+						//通过反射执行函数
+						reflect.ValueOf(crawler).MethodByName(req.Callback).Call(params)
 					}
 
 					Log.Debug("start spider go end")
@@ -221,7 +225,6 @@ func AddRequest(req *request.Request) {
 func AddCrawlerChan(crawlerName string) {
 	centipede.CrawlerJob <- items.CrawlerChan{
 		CrawlerEr: centipede.Crawlers[crawlerName],
-		Params:    map[string]string{},
 	}
 }
 
@@ -257,7 +260,7 @@ func AddFile(file items.File, path string) {
 // Login 登录获取Cookie
 func Login(url string, params map[string]string) {
 
-	req := request.NewRequest(url).AddParams(params)
+	req := request.NewRequest(url).AddPostParams(params)
 
 	resp, _ := centipede.Downloader.Download(req)
 
@@ -326,10 +329,9 @@ func SetCookieString(rawUrl string, cookie string) {
 
 func PushCrawler(crawler string) {
 	if c, ok := centipede.Crawlers[crawler]; ok {
-		Log.Debugln(c)
+		//Log.Debugln(c)
 		centipede.CrawlerJob <- items.CrawlerChan{
 			CrawlerEr: c,
-			Params:    map[string]string{},
 		}
 	} else {
 		Log.Errorln(crawler, "爬虫脚本不存在")

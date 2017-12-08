@@ -16,7 +16,9 @@ type Request struct {
 	Method string
 
 	// POST data
-	Params urllib.Values
+	PostParams urllib.Values
+
+	CallParams map[string]string
 
 	// 回调函数名称
 	Callback string
@@ -32,10 +34,11 @@ type Request struct {
 func NewRequest(url string) *Request {
 
 	request := Request{
-		Url:    url,
-		Header: http.Header{},
-		Method: "GET",
-		Params: urllib.Values{},
+		Url:        url,
+		Header:     http.Header{},
+		Method:     "GET",
+		PostParams: urllib.Values{},
+		CallParams: nil,
 	}
 
 	return &request
@@ -62,29 +65,46 @@ func (this *Request) GetMethod() string {
 	} else {
 		return "GET"
 	}
-
 }
 
-func (this *Request) GetParams() string {
-	return this.Params.Encode()
+func (this *Request) GetPostParams() string {
+	return this.PostParams.Encode()
 }
 
-func (this *Request) AddParam(key string, value string) *Request {
-	this.Params.Add(key, value)
+func (this *Request) AddCallParam(key string, value string) *Request {
+	if this.CallParams == nil {
+		this.CallParams = map[string]string{}
+	}
+
+	this.CallParams[key] = value
 
 	return this
 }
 
-func (this *Request) AddParams(params map[string]string) *Request {
+func (this *Request) AddCallParams(params map[string]string) *Request {
+
+	if this.CallParams == nil {
+		this.CallParams = map[string]string{}
+	}
+
 	for k, v := range params {
-		this.Params.Add(k, v)
+		this.CallParams[k] = v
 	}
 
 	return this
 }
 
-func (this *Request) SetParam(key string, value string) *Request {
-	this.Params.Set(key, value)
+func (this *Request) AddPostParam(key string, value string) *Request {
+	this.PostParams.Add(key, value)
+
+	return this
+}
+
+func (this *Request) AddPostParams(params map[string]string) *Request {
+	for k, v := range params {
+		this.PostParams.Add(k, v)
+	}
+
 	return this
 }
 

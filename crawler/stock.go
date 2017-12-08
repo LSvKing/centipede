@@ -63,7 +63,7 @@ func init() {
 }
 
 func (stock *Stock) Parse() {
-	req := request.NewRequest("http://web.juhe.cn:8080/finance/stock/shall").SetCallback("StockCodeList").SetParam("key", AppKey).SetMethod("POST")
+	req := request.NewRequest("http://web.juhe.cn:8080/finance/stock/shall").SetCallback("StockCodeList").AddPostParam("key", AppKey).SetMethod("POST")
 
 	centipede.AddRequest(req)
 }
@@ -102,7 +102,7 @@ func (stock *Stock) StockCodeList(response *http.Response) {
 		u := response.Request.URL.String()
 
 		for i := 1; i <= totalPage; i++ {
-			req := request.NewRequest(u).AddParams(
+			req := request.NewRequest(u).AddPostParams(
 				map[string]string{
 					"key":  AppKey,
 					"page": strconv.Itoa(i),

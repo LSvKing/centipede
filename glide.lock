@@ -1,5 +1,5 @@
-hash: a4f779dc0a019e1dcb192f40c0590d45a2e7836a2c0ca9e23f02b70a92a740da
-updated: 2017-09-14T15:32:30.60884989+08:00
+hash: 4f09442c1dded8d06af7c0220e7220eb89fde928f19ab3445464b3633d08dd1b
+updated: 2017-12-06T15:29:43.698523972+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -10,11 +10,11 @@ imports:
   subpackages:
   - spew
 - name: github.com/fatih/camelcase
-  version: f6a740d52f961c60348ebb109adde9f4635d7540
+  version: 44e46d280b43ec1531bb25252440e34f1b800b65
 - name: github.com/fatih/structs
-  version: 7e5a8eef611ee84dd359503f3969f80df4c50723
+  version: f5faa72e73092639913f5833b75e1ac1d6bc7a63
 - name: github.com/go-redis/redis
-  version: fdafb11e5fa5d52d965e12073c8a58468c98ebe2
+  version: e5e021257bfc6d5fbf0beac33e30194311fb189f
   subpackages:
   - internal
   - internal/consistenthash
@@ -24,40 +24,42 @@ imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 24fca303ac6da784b9e8269f724ddeb0b2eea5e7
+  version: 7f08801859139f86dfafd1c296e2cba9a80d292e
 - name: github.com/jaytaylor/html2text
-  version: 7c7a33a7a158a5ce395c803d2b6a209b2bbc14c8
+  version: 0ee88d3006305456b84cad14a24b2576f9411965
 - name: github.com/jcelliott/lumber
   version: dd349441af25132d146d7095c6693a15431fc9b1
+- name: github.com/json-iterator/go
+  version: f7279a603edee96fe7764d3de9c6ff8cf9970994
 - name: github.com/koding/multiconfig
-  version: 7ab5923ac43fc173d0c21e5e91da559469fa04f8
+  version: 69c27309b2d751c576b59ea9c3726597c2375da3
 - name: github.com/LSvKing/cron
   version: 57ac9950da80b6e2c12df9042429278cf8c729eb
 - name: github.com/nanobox-io/golang-scribble
-  version: da3a159a462297745592fd615d4bcebec94b54c6
+  version: ced58d671850da57ce8c11315424513b608083d7
 - name: github.com/PuerkitoBio/goquery
   version: e1271ee34c6a305e38566ecd27ae374944907ee9
 - name: github.com/sirupsen/logrus
-  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
+  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
 - name: github.com/weekface/mgorus
   version: 83720e22971a8301c5b2738c9364accd3d9eb13a
 - name: golang.org/x/crypto
-  version: faadfbdc035307d901e69eea569f5dda451a3ee3
+  version: 94eea52f7b742c7cbe0b03b22f0c4c8631ece122
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
-  version: 859d1a86bb617c0c20d154590c3c5d3fcb670b07
+  version: a8b9294777976932365dabb6640cf1468d95c70f
   subpackages:
   - context
   - html
   - html/atom
 - name: golang.org/x/sys
-  version: 062cd7e4e68206d8bab9b18396626e855c992658
+  version: 8b4580aae2a0dd0c231a45d3ccb8434ff533b840
   subpackages:
   - unix
   - windows
 - name: golang.org/x/time
-  version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
+  version: 6dc17368e09b0e8634d71cac8168d853e869a0c7
   subpackages:
   - rate
 - name: gopkg.in/mgo.v2
@@ -68,9 +70,9 @@ imports:
   - internal/sasl
   - internal/scram
 - name: gopkg.in/yaml.v2
-  version: eb3733d160e74a9c7e442f435eb3bea458e1d19f
+  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
 - name: upper.io/db.v3
-  version: 46f50a98f8d5d77d1d4631f1bcc0ce6496e55734
+  version: 4ceccb1227aba5fc0f71ca3adc5dd759dfbc093e
   subpackages:
   - internal/immutable
   - mongo

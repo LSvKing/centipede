@@ -1,9 +1,6 @@
 package items
 
-import (
-	"io"
-	"net/http"
-)
+import "net/http"
 
 type (
 	DataCache []DataRow
@@ -26,7 +23,6 @@ type (
 	}
 
 	File struct {
-		Body     io.ReadCloser
 		FileName string
 		Response *http.Response
 	}
