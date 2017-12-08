@@ -112,29 +112,29 @@ func (this *Ivoix) Pipeline(data items.DataRow) {
 }
 
 func (this *Ivoix) ParseUrl() {
-	centipede.Log.Debug("ivoix start")
-	fenLeiUrl := "http://m.ivoix.cn/fenlei91"
 
-	req := request.NewRequest(fenLeiUrl)
+	fenLeiUrl := "http://m.ivoix.cn/fenlei"
 
-	resp, err := centipede.Downloader(req)
+	for i := 1; i <= 91; i++ {
+		u := fenLeiUrl + strconv.Itoa(i)
+		req := request.NewRequest(u).SetCallback("ParseFenUrl")
 
-	defer func() {
-		resp.Body.Close()
-	}()
-
-	if err != nil || resp.StatusCode == http.StatusNotFound {
-		centipede.Log.Errorln("资源不存在")
-
-		return
+		centipede.AddRequest(req)
 	}
+}
 
-	doc, err := goquery.NewDocumentFromResponse(resp)
+func (this *Ivoix) ParseFenUrl(response *http.Response) {
+
+	doc, err := goquery.NewDocumentFromResponse(response)
+
+	if err != nil {
+		centipede.Log.Errorln("NewDocumentFromResponse", err)
+	}
 
 	pageNum := doc.Find(".pgsel option").Length()
 
 	for i := 1; i < pageNum; i++ {
-		req := request.NewRequest(fenLeiUrl + "p" + strconv.Itoa(i)).SetCallback("ParseFenList")
+		req := request.NewRequest(response.Request.URL.String() + "p" + strconv.Itoa(i)).SetCallback("ParseFenList")
 		centipede.AddRequest(req)
 	}
 }
