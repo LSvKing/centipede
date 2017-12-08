@@ -26,4 +26,7 @@ type (
 		FileName string
 		Response *http.Response
 	}
+
+	PipelineRow struct {
+	}
 )

@@ -26,11 +26,6 @@ func (this *OutPutMongGo) OutPut(dataCache items.DataCache) {
 		Database: appConfig.Mongo.Database, // Database name.
 	}
 
-	if appConfig.Mongo.UserName != "" {
-		settings.User = appConfig.Mongo.UserName
-		settings.Password = appConfig.Mongo.PassWord
-	}
-
 	sess, err := mongo.Open(settings)
 
 	if err != nil {

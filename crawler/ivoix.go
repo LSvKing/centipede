@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"upper.io/db.v3/mongo"
 )
 
@@ -253,12 +254,23 @@ func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string
 
 	centipede.Log.Debugln(path, "====", sp[len(sp)-1])
 
-	file := items.File{
-		Response: response,
-		FileName: sp[len(sp)-1],
+	client, err := oss.New("oss-cn-beijing-internal.aliyuncs.com", "j1wOLKZNFGcF9B0t", "7yKiMHweWpSJylcD02899v5eUH9nuG")
+
+	if err != nil {
+		centipede.Log.Errorln("oss client", err)
 	}
 
-	centipede.AddFile(file, path)
+	bucket, err := client.Bucket("centipede")
+
+	if err != nil {
+		centipede.Log.Errorln("oss bucket", err)
+	}
+
+	err = bucket.PutObject(sp[len(sp)-1], response.Body)
+
+	if err != nil {
+		centipede.Log.Errorln("oss PutObject", err)
+	}
 
 	centipede.AddData([]items.Data{
 		{

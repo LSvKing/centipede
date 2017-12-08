@@ -109,7 +109,6 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 	}()
 
 	go func() {
-
 		log.Debug("pipeline.FileChan:", len(pipeline.FileChan))
 
 		var wait sync.WaitGroup
