@@ -115,12 +115,16 @@ func (this *Ivoix) ParseUrl() {
 
 	fenLeiUrl := "http://m.ivoix.cn/fenlei"
 
-	for i := 1; i <= 91; i++ {
-		u := fenLeiUrl + strconv.Itoa(i)
-		req := request.NewRequest(u).SetCallback("ParseFenUrl")
+	// for i := 1; i <= 91; i++ {
+	// 	u := fenLeiUrl + strconv.Itoa(i)
+	// 	req := request.NewRequest(u).SetCallback("ParseFenUrl")
 
-		centipede.AddRequest(req)
-	}
+	// 	centipede.AddRequest(req)
+	// }
+
+	req := request.NewRequest(fenLeiUrl + "91").SetCallback("ParseFenUrl")
+
+	centipede.AddRequest(req)
 }
 
 func (this *Ivoix) ParseFenUrl(response *http.Response) {
