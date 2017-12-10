@@ -190,7 +190,21 @@ func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) 
 	info := doc.Find("#bookinfo")
 
 	author := info.Find("p").Eq(1).Text()
+
+	if len(author) > 0 {
+		if strings.Contains(author, "播音：") {
+			author = strings.Replace(author, "播音：", "", -1)
+		}
+	}
+
 	owner := info.Find("p").Eq(0).Text()
+
+	if len(owner) > 0 {
+		if strings.Contains(owner, "作者：") {
+			owner = strings.Replace(owner, "作者：", "", -1)
+		}
+	}
+
 	image := info.Find(".bookimg").AttrOr("src", "null")
 	description := info.Find("p").Eq(5).Text()
 
@@ -269,7 +283,7 @@ func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string
 		centipede.Log.Errorln("oss bucket", err)
 	}
 
-	err = bucket.PutObject(path, response.Body)
+	err = bucket.PutObject(params["aid"], response.Body)
 
 	if err != nil {
 		centipede.Log.Errorln("oss PutObject", err)
