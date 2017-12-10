@@ -27,7 +27,7 @@ var (
 	mp3Url  = "http://m.ivoix.cn/inc/audio.asp"
 	downUrl = "http://125.46.58.23:88"
 
-	MongoCache = make([]map[string]interface{}, 4)
+	MongoCache = make([]map[string]interface{}, 0, 4)
 )
 
 func init() {
@@ -356,6 +356,8 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 	c := sess.Collection(collection)
 
 	r, err := c.Insert(MongoCache)
+
+	MongoCache = MongoCache[:0]
 
 	if err != nil {
 		centipede.Log.Errorln(err)
