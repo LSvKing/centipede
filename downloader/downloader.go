@@ -45,6 +45,7 @@ func New() *Downloader {
 }
 
 func (downloader *Downloader) Download(req *request.Request) (*http.Response, error) {
+
 	log.Debug("Download")
 
 	httpReq, e := http.NewRequest(req.GetMethod(), req.GetUrl(), strings.NewReader(req.PostParams.Encode()))
@@ -70,6 +71,8 @@ func (downloader *Downloader) Download(req *request.Request) (*http.Response, er
 	client := downloader.Client
 
 	resp, err := client.Do(httpReq)
+
+	defer resp.Body.Close()
 
 	log.Debug("Download End")
 
