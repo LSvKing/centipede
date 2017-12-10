@@ -1,8 +1,6 @@
 package logs
 
 import (
-	"centipede/config"
-
 	"github.com/sirupsen/logrus"
 	// "github.com/weekface/mgorus"
 )
@@ -12,7 +10,7 @@ func New() *logrus.Logger {
 
 	log.Level = logrus.ErrorLevel
 
-	appConfig := config.Get()
+	// appConfig := config.Get()
 
 	// hooker, err := mgorus.NewHooker(appConfig.Mongo.Host+":"+appConfig.Mongo.Post, appConfig.Mongo.Database, "log")
 
