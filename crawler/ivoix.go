@@ -35,7 +35,7 @@ func init() {
 		items.Crawler{
 			Name:         "Ivoix",
 			Thread:       20,
-			Limit:        10,
+			Limit:        20,
 			DisableProxy: false,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
