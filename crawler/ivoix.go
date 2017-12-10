@@ -35,8 +35,8 @@ func init() {
 	centipede.AddCrawler(&Ivoix{
 		items.Crawler{
 			Name:         "Ivoix",
-			Thread:       5,
-			Limit:        5,
+			Thread:       10,
+			Limit:        10,
 			DisableProxy: false,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
