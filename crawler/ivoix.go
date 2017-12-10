@@ -26,8 +26,6 @@ var (
 	siteUrl = "http://m.ivoix.cn"
 	mp3Url  = "http://m.ivoix.cn/inc/audio.asp"
 	downUrl = "http://125.46.58.23:88"
-
-	MongoCache = make([]map[string]interface{}, 0, 4)
 )
 
 func init() {
@@ -327,14 +325,6 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 
 func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
-	// MongoCache := make([]map[string]string, 0, 4)
-
-	MongoCache = append(MongoCache, data)
-
-	if len(MongoCache) < 4 {
-		return
-	}
-
 	appConfig := config.Get()
 
 	var settings = mongo.ConnectionURL{
@@ -355,9 +345,7 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
 	c := sess.Collection(collection)
 
-	r, err := c.Insert(MongoCache)
-
-	MongoCache = MongoCache[:0]
+	r, err := c.Insert(data)
 
 	if err != nil {
 		centipede.Log.Errorln(err)
