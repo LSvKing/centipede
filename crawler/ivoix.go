@@ -317,7 +317,7 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 	err = bucket.PutObject("cover/"+params["bookId"]+".jpg", response.Body)
 
 	if err != nil {
-		centipede.Log.Errorln("oss PutObject", err)
+		centipede.Log.Errorln("oss PutObject", "cover/"+params["bookId"]+".jpg", err)
 	}
 
 	defer response.Body.Close()
