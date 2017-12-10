@@ -256,7 +256,11 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 
 	mUrl := downUrl + filePath
 
-	req := request.NewRequest(mUrl).SetCallback("DownloadMp3").AddCallParam("filePath", filePath)
+	req := request.NewRequest(mUrl).SetCallback("DownloadMp3")
+
+	req.CallParams = params
+
+	req.AddCallParam("filePath", filePath)
 
 	centipede.AddRequest(req)
 
@@ -282,8 +286,6 @@ func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string
 	}
 
 	err = bucket.PutObject(params["aid"], response.Body, options...)
-
-	defer response.Body.Close()
 
 	if err != nil {
 		centipede.Log.Errorln("oss PutObject", err)
