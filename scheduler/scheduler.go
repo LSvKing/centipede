@@ -33,6 +33,8 @@ func New() *Scheduler {
 		log.Fatalln(err)
 	}
 
+	defer client.Close()
+
 	return &Scheduler{locker, client}
 }
 

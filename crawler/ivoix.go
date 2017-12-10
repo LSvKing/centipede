@@ -301,6 +301,8 @@ func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string
 
 	this.InsertMongo(p, "audio")
 
+	defer response.Body.Close()
+
 }
 
 func (this *Ivoix) DownloadCover(response *http.Response, params map[string]string) {
