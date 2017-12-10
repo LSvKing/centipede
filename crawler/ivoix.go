@@ -1,7 +1,6 @@
 package crawler
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -72,7 +71,7 @@ func (this *Ivoix) Pipeline(data items.DataRow) {
 	sess, err := mongo.Open(settings)
 
 	if err != nil {
-		log.Fatalf("db.Open(): %q\n", err)
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
 	}
 
 	defer sess.Close() // Remember to close the database session.
