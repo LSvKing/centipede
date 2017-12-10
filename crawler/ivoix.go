@@ -123,6 +123,8 @@ func (this *Ivoix) ParseFenUrl(response *http.Response) {
 		req := request.NewRequest(response.Request.URL.String() + "p" + strconv.Itoa(i)).SetCallback("ParseFenList")
 		centipede.AddRequest(req)
 	}
+
+	defer response.Body.Close()
 }
 
 func (this *Ivoix) ParseFenList(response *http.Response) {
@@ -151,6 +153,8 @@ func (this *Ivoix) ParseFenList(response *http.Response) {
 			centipede.AddRequest(req)
 		}
 	})
+
+	defer response.Body.Close()
 }
 
 func (this *Ivoix) ParseBookList(response *http.Response, params map[string]string) {
@@ -208,6 +212,8 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 		req := request.NewRequest(response.Request.URL.String()+"p"+strconv.Itoa(i)).SetCallback("ParseBook").AddCallParam("bookId", bookID)
 		centipede.AddRequest(req)
 	}
+
+	defer response.Body.Close()
 }
 
 func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) {
@@ -236,6 +242,8 @@ func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) 
 			centipede.Log.Errorln(err)
 		}
 	})
+
+	defer response.Body.Close()
 }
 
 func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
@@ -253,6 +261,8 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 	req := request.NewRequest(mUrl).SetCallback("DownloadMp3").AddCallParam("filePath", filePath)
 
 	centipede.AddRequest(req)
+
+	defer response.Body.Close()
 }
 
 func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string) {
@@ -274,6 +284,8 @@ func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string
 	}
 
 	err = bucket.PutObject(params["aid"], response.Body, options...)
+
+	defer response.Body.Close()
 
 	if err != nil {
 		centipede.Log.Errorln("oss PutObject", err)
@@ -309,6 +321,8 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 	if err != nil {
 		centipede.Log.Errorln("oss PutObject", err)
 	}
+
+	defer response.Body.Close()
 }
 
 func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {

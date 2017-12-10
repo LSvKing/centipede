@@ -72,8 +72,6 @@ func (downloader *Downloader) Download(req *request.Request) (*http.Response, er
 
 	resp, err := client.Do(httpReq)
 
-	defer resp.Body.Close()
-
 	log.Debug("Download End")
 
 	return resp, err
