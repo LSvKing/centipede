@@ -283,7 +283,11 @@ func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string
 		centipede.Log.Errorln("oss bucket", err)
 	}
 
-	err = bucket.PutObject(params["aid"], response.Body)
+	options := []oss.Option{
+		oss.ContentType("audio/mp3"),
+	}
+
+	err = bucket.PutObject(params["aid"], response.Body, options...)
 
 	if err != nil {
 		centipede.Log.Errorln("oss PutObject", err)
