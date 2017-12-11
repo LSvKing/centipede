@@ -50,6 +50,10 @@ func (downloader *Downloader) Download(req *request.Request) (*http.Response, er
 
 	httpReq, e := http.NewRequest(req.GetMethod(), req.GetUrl(), strings.NewReader(req.PostParams.Encode()))
 
+	if e != nil {
+		log.Errorln(e)
+	}
+
 	if req.Header != nil {
 		httpReq.Header = req.Header
 	}
@@ -63,10 +67,6 @@ func (downloader *Downloader) Download(req *request.Request) (*http.Response, er
 	}
 
 	httpReq.Close = true
-
-	if e != nil {
-		log.Errorln(e)
-	}
 
 	client := downloader.Client
 

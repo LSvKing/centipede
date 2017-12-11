@@ -8,7 +8,7 @@ import (
 func New() *logrus.Logger {
 	var log = logrus.New()
 
-	log.Level = logrus.ErrorLevel
+	log.Level = logrus.DebugLevel
 
 	// appConfig := config.Get()
 
