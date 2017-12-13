@@ -162,13 +162,6 @@ func (pipeline *Pipeline) Run(crawler items.CrawlerEr) {
 					log.Error(err)
 					return
 				}
-			}()
-
-			wait.Wait()
-		}
-
-	}()
-
 	//<-pipeline.DataChan
 	//<-pipeline.FileChan
 	//}()

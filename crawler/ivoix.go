@@ -135,12 +135,12 @@ func (this *Ivoix) ParseFenList(response *http.Response) {
 
 	pagetit := doc.Find(".pagetit span").Eq(0).Text()
 
-	centipede.AddData([]items.Data{
-		{
-			Field: "name",
-			Value: pagetit,
-		},
-	}, "category")
+	//centipede.AddData([]items.Data{
+	//	{
+	//		Field: "name",
+	//		Value: pagetit,
+	//	},
+	//}, "category")
 
 	doc.Find(".searchul li").Each(func(i int, selection *goquery.Selection) {
 		_, ok := selection.Attr("data-role")
@@ -203,8 +203,8 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	this.InsertMongo(p, "book")
 
-	reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
-	centipede.AddRequest(reqCover)
+	//reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
+	//centipede.AddRequest(reqCover)
 
 	for i := 1; i < pageNum; i++ {
 		req := request.NewRequest(response.Request.URL.String()+"p"+strconv.Itoa(i)).SetCallback("ParseBook").AddCallParams(params).AddCallParam("bookId", bookID)
@@ -269,27 +269,27 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 
 func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string) {
 
-	client, err := oss.New("oss-cn-beijing-internal.aliyuncs.com", "j1wOLKZNFGcF9B0t", "7yKiMHweWpSJylcD02899v5eUH9nuG")
-
-	if err != nil {
-		centipede.Log.Errorln("oss client", err)
-	}
-
-	bucket, err := client.Bucket("centipede")
-
-	if err != nil {
-		centipede.Log.Errorln("oss bucket", err)
-	}
-
-	options := []oss.Option{
-		oss.ContentType("audio/mp3"),
-	}
-
-	err = bucket.PutObject(params["aid"], response.Body, options...)
-
-	if err != nil {
-		centipede.Log.Errorln("oss PutObject", err)
-	}
+	//client, err := oss.New("oss-cn-beijing-internal.aliyuncs.com", "j1wOLKZNFGcF9B0t", "7yKiMHweWpSJylcD02899v5eUH9nuG")
+	//
+	//if err != nil {
+	//	centipede.Log.Errorln("oss client", err)
+	//}
+	//
+	//bucket, err := client.Bucket("centipede")
+	//
+	//if err != nil {
+	//	centipede.Log.Errorln("oss bucket", err)
+	//}
+	//
+	//options := []oss.Option{
+	//	oss.ContentType("audio/mp3"),
+	//}
+	//
+	//err = bucket.PutObject(params["aid"], response.Body, options...)
+	//
+	//if err != nil {
+	//	centipede.Log.Errorln("oss PutObject", err)
+	//}
 
 	p := map[string]interface{}{
 		"bookId":     params["bookId"],
