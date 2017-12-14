@@ -98,7 +98,7 @@ func Run() {
 			var limiter *rate.Limiter
 
 			if crawler.Option().Limit > 0 {
-				limiter = rate.NewLimiter(crawler.Option().Limit, 5)
+				limiter = rate.NewLimiter(crawler.Option().Limit, 1024)
 			}
 
 			for {
