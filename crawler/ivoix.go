@@ -1,7 +1,6 @@
 package crawler
 
 import (
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -12,6 +11,8 @@ import (
 	"centipede/config"
 	"centipede/items"
 	"centipede/request"
+
+	"io/ioutil"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -253,16 +254,26 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 	}
 
 	filePath := string(bodyBytes)
+	//
+	//mUrl := downUrl + filePath
 
-	mUrl := downUrl + filePath
+	//req := request.NewRequest(mUrl).SetCallback("DownloadMp3").AddCallParams(params)
 
-	req := request.NewRequest(mUrl).SetCallback("DownloadMp3").AddCallParams(params)
+	//req.CallParams = params
 
-	req.CallParams = params
+	//req.AddCallParam("filePath", filePath)
 
-	req.AddCallParam("filePath", filePath)
+	//centipede.AddRequest(req)
 
-	centipede.AddRequest(req)
+	p := map[string]interface{}{
+		"bookId":     params["bookId"],
+		"name":       params["name"],
+		"aid":        params["aid"],
+		"path":       filePath,
+		"updateTime": time.Now(),
+	}
+
+	this.InsertMongo(p, "audio")
 
 	defer response.Body.Close()
 }
