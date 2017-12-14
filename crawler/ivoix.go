@@ -143,6 +143,10 @@ func (this *Ivoix) ParseFenList(response *http.Response) {
 	//	},
 	//}, "category")
 
+	this.InsertMongo(map[string]interface{}{
+		"name": pagetit,
+	}, "category")
+
 	doc.Find(".searchul li").Each(func(i int, selection *goquery.Selection) {
 		_, ok := selection.Attr("data-role")
 
