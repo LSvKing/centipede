@@ -113,7 +113,7 @@ func Run() {
 
 				mc.GetOne()
 
-				req := centipede.Scheduler.Poll()
+				req, _ := centipede.Scheduler.Poll()
 
 				if req == nil {
 					mc.FreeOne()
@@ -206,6 +206,68 @@ func Run() {
 	}
 
 	<-centipede.CrawlerJob
+}
+
+func RunNew() {
+	Log.Infoln("Centipede 开始运行")
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	for crawlerChan := range centipede.CrawlerJob {
+
+		ctx, _ := context.WithCancel(context.Background())
+		limiter := rate.NewLimiter(crawlerChan.CrawlerEr.Option().Limit, 1024)
+
+		go func() {
+			limiter.Wait(ctx)
+
+			req, err := centipede.Scheduler.Poll()
+
+			fmt.Println(req)
+
+			if err != nil {
+				time.Sleep(1 * time.Second)
+			}
+
+			if resp, err := centipede.Downloader.Download(req); err != nil {
+				Log.WithField("type", "downloadReTry").WithError(err).Error("下载重试")
+
+				if req.ReTry < 4 {
+					req.ReTry += 1
+
+					centipede.Scheduler.Push(req)
+				} else {
+					Log.WithField("type", "downloadError").WithError(err).Error("重试失败")
+				}
+
+			} else {
+				defer func() {
+					if p := recover(); p != nil {
+						Log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
+					}
+
+				}()
+
+				Log.Debugln("get finsh")
+
+				//通过反射执行 回调函数
+				params := make([]reflect.Value, 0)
+
+				//取 resp 参数放入执行参数
+				params = append(params, reflect.ValueOf(resp))
+
+				//如果回调请求设置了 自定义参数 加入自定义参数到执行参数
+				if req.CallParams != nil {
+					params = append(params, reflect.ValueOf(req.CallParams))
+				}
+
+				//通过反射执行函数
+				reflect.ValueOf(crawler).MethodByName(req.Callback).Call(params)
+			}
+
+		}()
+	}
+
 }
 
 func AddCrawler(crawler items.CrawlerEr) {

@@ -46,23 +46,17 @@ func (this *Scheduler) Push(r *request.Request) {
 	this.locker.Unlock()
 }
 
-func (this *Scheduler) Poll() *request.Request {
+func (this *Scheduler) Poll() (*request.Request, error) {
 	this.locker.Lock()
 
 	jsonReq, err := this.client.LPop("scheuler").Bytes()
-
-	if err != nil {
-		log.Errorf(err.Error())
-		this.locker.Unlock()
-		return nil
-	}
 
 	var req *request.Request
 
 	json.Unmarshal(jsonReq, &req)
 
 	this.locker.Unlock()
-	return req
+	return req, err
 }
 
 func (this *Scheduler) Count() int {
