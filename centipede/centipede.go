@@ -173,7 +173,7 @@ func Run() {
 					} else {
 						defer func() {
 							if p := recover(); p != nil {
-								Log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
+								Log.WithField("trace", string(debug.Stack())).WithField("Request", req).Fatalf("蜘蛛异常错误 error: %v", p)
 							}
 
 						}()
