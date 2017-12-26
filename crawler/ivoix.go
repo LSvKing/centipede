@@ -14,8 +14,10 @@ import (
 
 	"io/ioutil"
 
+	"io"
+	"os"
+
 	"github.com/PuerkitoBio/goquery"
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"upper.io/db.v3/mongo"
 )
 
@@ -213,8 +215,8 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	this.InsertMongo(p, "book")
 
-	//reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
-	//centipede.AddRequest(reqCover)
+	reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
+	centipede.AddRequest(reqCover)
 
 	for i := 1; i < pageNum; i++ {
 		req := request.NewRequest(response.Request.URL.String()+"p"+strconv.Itoa(i)).SetCallback("ParseBook").AddCallParams(params).AddCallParam("bookId", bookID)
@@ -330,22 +332,38 @@ func (this *Ivoix) DownloadMp3(response *http.Response, params map[string]string
 }
 
 func (this *Ivoix) DownloadCover(response *http.Response, params map[string]string) {
-	client, err := oss.New("oss-cn-beijing-internal.aliyuncs.com", "j1wOLKZNFGcF9B0t", "7yKiMHweWpSJylcD02899v5eUH9nuG")
+	//client, err := oss.New("oss-cn-beijing-internal.aliyuncs.com", "j1wOLKZNFGcF9B0t", "7yKiMHweWpSJylcD02899v5eUH9nuG")
+	//
+	//if err != nil {
+	//	centipede.Log.Errorln("oss client", err)
+	//}
+	//
+	//bucket, err := client.Bucket("centipede")
+	//
+	//if err != nil {
+	//	centipede.Log.Errorln("oss bucket", err)
+	//}
+	//
+	//err = bucket.PutObject("cover/"+params["bookId"]+".jpg", response.Body)
+	//
+	//if err != nil {
+	//	centipede.Log.Errorln("oss PutObject", "cover/"+params["bookId"]+".jpg", err)
+	//}
 
+	appConfig := config.Get()
+
+	f, err := os.OpenFile(appConfig.FilePath+"/cover/"+params["bookId"]+".jpg", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
-		centipede.Log.Errorln("oss client", err)
+		centipede.Log.Error("[文件下载]", err)
+		return
 	}
 
-	bucket, err := client.Bucket("centipede")
+	//log.Debugf("存储时: %p",&file.Body,file.Body.ContentLength)
+	_, err = io.Copy(f, response.Body)
 
 	if err != nil {
-		centipede.Log.Errorln("oss bucket", err)
-	}
-
-	err = bucket.PutObject("cover/"+params["bookId"]+".jpg", response.Body)
-
-	if err != nil {
-		centipede.Log.Errorln("oss PutObject", "cover/"+params["bookId"]+".jpg", err)
+		centipede.Log.Error("[文件下载]", err)
+		return
 	}
 
 	defer response.Body.Close()
