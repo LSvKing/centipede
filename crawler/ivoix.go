@@ -236,6 +236,8 @@ func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) 
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)
 
 		req := request.NewRequest(response.Request.URL.String()).SetCallback("ParseBook").AddCallParams(params).AddCallParam("bookId", params["bookId"])
+
+		req.ReTry += 1
 		centipede.AddRequest(req)
 
 		return
@@ -273,13 +275,15 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 
 	filePath := string(bodyBytes)
 
-	if len(filePath) > 50 {
-		centipede.Log.Errorln(filePath)
+	if len(filePath) > 150 {
+		centipede.Log.Errorln("en(filePath) > 150", filePath)
 
 		req := request.NewRequest(mp3Url).SetMethod("POST").
 			AddHeader("Cookie", "safedog-flow-item=; lygusername=lsvking; userid=427591; ASPSESSIONIDQSTSTBCS=FKCGENOCPGGAJJCPNGEAFMIH; apwd=lsv324000; userid=427591; aname=lsvking; lyguserpwd=lsv324000; hisArt=%5B%7B%22title%22%3A%22%E5%A4%A9%E4%BD%93%E6%82%AC%E6%B5%AE%22%2C%22url%22%3A%22%2Fbook23549%22%7D%2C%7B%22title%22%3A%22%E5%87%AF%E5%8F%94%E8%A5%BF%E6%B8%B8%E8%AE%B0_1-5%E9%83%A8%E5%85%A8%E9%9B%86%22%2C%22url%22%3A%22%2Fbook23536%22%7D%2C%7B%22title%22%3A%22%E5%86%92%E6%AD%BB%E8%AE%B0%E5%BD%95%E7%A5%9E%E7%A7%98%E4%BA%8B%E4%BB%B64_%E9%9D%92%E9%9B%AA%E6%95%85%E4%BA%8B%22%2C%22url%22%3A%22%2Fbook22737%22%7D%2C%7B%22title%22%3A%22undefined%22%2C%22url%22%3A%22undefined%22%7D%2C%7B%22title%22%3A%22%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A0%91_1Q84%22%2C%22url%22%3A%22%2Fbook23556%22%7D%2C%7B%22title%22%3A%22%E8%8B%8F%E9%BA%BB%E5%96%87%E5%A7%91%E4%BC%A0%22%2C%22url%22%3A%22%2Fbook23543%22%7D%2C%7B%22title%22%3A%22%E5%88%9D%E4%B8%AD%E7%94%9F%E5%BF%85%E8%83%8C%E5%8F%A4%E8%AF%97%E6%96%87%E6%A0%87%E5%87%86%E6%9C%97%E8%AF%B5%22%2C%22url%22%3A%22%2Fbook23513%22%7D%5D").
 			AddPostParam("aid", params["aid"]).AddPostParam("uname", "lsvking").AddCallParam("aid", params["aid"]).AddCallParams(params).AddCallParam("name", params["name"]).
 			SetCallback("ParseMp3")
+
+		req.ReTry += 1
 
 		centipede.AddRequest(req)
 	}

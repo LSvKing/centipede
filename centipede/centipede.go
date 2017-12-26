@@ -229,6 +229,10 @@ func RunNew() {
 				time.Sleep(1 * time.Second)
 			}
 
+			if req.ReTry > 3 {
+				Log.Errorln("已到达最大重试次数,抛弃", req)
+			}
+
 			if resp, err := centipede.Downloader.Download(req); err != nil {
 				Log.WithField("type", "downloadReTry").WithError(err).Error("下载重试")
 
