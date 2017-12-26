@@ -262,7 +262,7 @@ func RunNew() {
 				}
 
 				//通过反射执行函数
-				reflect.ValueOf(crawler).MethodByName(req.Callback).Call(params)
+				reflect.ValueOf(crawlerChan.CrawlerEr).MethodByName(req.Callback).Call(params)
 			}
 
 		}()
