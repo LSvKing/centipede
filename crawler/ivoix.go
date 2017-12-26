@@ -26,7 +26,7 @@ type Ivoix struct {
 var (
 	siteUrl = "http://m.ivoix.cn"
 	mp3Url  = "http://m.ivoix.cn/inc/audio.asp"
-	downUrl = "http://125.46.58.23:88"
+	downUrl = "http://125.46.58.23"
 )
 
 func init() {
@@ -168,9 +168,24 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)
 	}
 
+	re := regexp.MustCompile(`book(\d+)`)
+	bookStr := re.FindStringSubmatch(response.Request.URL.String())
+
+	bookID := bookStr[1]
+
 	pageNum := doc.Find(".pgsel option").Length()
 
 	info := doc.Find("#bookinfo")
+
+	count := info.Find("p").Eq(2).Text()
+
+	if len(count) > 0 {
+		if strings.Contains(count, "音频：") {
+			count = strings.Replace(count, "音频：", "", -1)
+		}
+	}
+
+	title := info.Find("h3").Text()
 
 	author := info.Find("p").Eq(1).Text()
 
@@ -192,18 +207,15 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	description := info.Find("p").Eq(5).Text()
 
-	re := regexp.MustCompile(`book(\d+)`)
-	bookStr := re.FindStringSubmatch(response.Request.URL.String())
-
-	bookID := bookStr[1]
-
 	p := map[string]interface{}{
+		"title":       title,
 		"bookId":      bookID,
 		"category":    params["category"],
 		"author":      author,
 		"owner":       owner,
 		"image":       image,
 		"description": description,
+		"count":       count,
 	}
 
 	this.InsertMongo(p, "book")
@@ -258,6 +270,10 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 	}
 
 	filePath := string(bodyBytes)
+
+	if len(filePath) > 50 {
+		panic(filePath)
+	}
 	//
 	//mUrl := downUrl + filePath
 
