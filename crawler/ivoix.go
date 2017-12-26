@@ -103,9 +103,9 @@ func (this *Ivoix) ParseUrl() {
 		centipede.AddRequest(req)
 	}
 
-	req := request.NewRequest(u).SetCallback("ParseFenUrl")
+	//req := request.NewRequest(u).SetCallback("ParseFenUrl")
 
-	centipede.AddRequest(req)
+	//centipede.AddRequest(req)
 }
 
 func (this *Ivoix) ParseFenUrl(response *http.Response) {
