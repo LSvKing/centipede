@@ -160,14 +160,14 @@ func Run() {
 					}
 
 					if resp, err := centipede.Downloader.Download(req); err != nil {
-						Log.WithField("type", "downloadReTry").WithError(err).Error("下载重试")
+						Log.WithField("type", "downloadReTry").WithField("Request", req).WithError(err).Error("下载重试")
 
 						if req.ReTry < 4 {
 							req.ReTry += 1
 
 							centipede.Scheduler.Push(req)
 						} else {
-							Log.WithField("type", "downloadError").WithError(err).Error("重试失败")
+							Log.WithField("type", "downloadError").WithField("Request", req).WithError(err).Error("重试失败")
 						}
 
 					} else {
