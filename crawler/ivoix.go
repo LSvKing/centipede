@@ -34,12 +34,12 @@ func init() {
 		items.Crawler{
 			Name:         "Ivoix",
 			Thread:       20,
-			Limit:        20,
-			DisableProxy: false,
+			Limit:        5,
+			DisableProxy: true,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
 				{
-					ProxyURL: "http://127.0.0.1:1087",
+					ProxyURL: "http://HR03Y5983TE1C0MD:72DAB06BEF59368F@http-dyn.abuyun.com:9020",
 				},
 			},
 			AutoRun: true,
