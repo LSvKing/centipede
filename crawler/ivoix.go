@@ -215,8 +215,10 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	this.InsertMongo(p, "book")
 
-	//reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
-	//centipede.AddRequest(reqCover)
+	if image != "null" {
+		reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
+		centipede.AddRequest(reqCover)
+	}
 
 	for i := 1; i < pageNum; i++ {
 		req := request.NewRequest(response.Request.URL.String()+"p"+strconv.Itoa(i)).SetCallback("ParseBook").AddCallParams(params).AddCallParam("bookId", bookID)
@@ -361,6 +363,10 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 	//if err != nil {
 	//	centipede.Log.Errorln("oss PutObject", "cover/"+params["bookId"]+".jpg", err)
 	//}
+
+	if response.Request.URL.String() == "null" {
+		return
+	}
 
 	appConfig := config.Get()
 
