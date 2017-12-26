@@ -103,9 +103,9 @@ func (this *Ivoix) ParseUrl() {
 		centipede.AddRequest(req)
 	}
 
-	// req := request.NewRequest(u).SetCallback("ParseFenUrl")
+	req := request.NewRequest(u).SetCallback("ParseFenUrl")
 
-	// centipede.AddRequest(req)
+	centipede.AddRequest(req)
 }
 
 func (this *Ivoix) ParseFenUrl(response *http.Response) {
@@ -135,13 +135,6 @@ func (this *Ivoix) ParseFenList(response *http.Response) {
 	}
 
 	pagetit := doc.Find(".pagetit span").Eq(0).Text()
-
-	//centipede.AddData([]items.Data{
-	//	{
-	//		Field: "name",
-	//		Value: pagetit,
-	//	},
-	//}, "category")
 
 	this.InsertMongo(map[string]interface{}{
 		"name": pagetit,
