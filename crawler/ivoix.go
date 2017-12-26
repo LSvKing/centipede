@@ -215,8 +215,8 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	this.InsertMongo(p, "book")
 
-	reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
-	centipede.AddRequest(reqCover)
+	//reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
+	//centipede.AddRequest(reqCover)
 
 	for i := 1; i < pageNum; i++ {
 		req := request.NewRequest(response.Request.URL.String()+"p"+strconv.Itoa(i)).SetCallback("ParseBook").AddCallParams(params).AddCallParam("bookId", bookID)
