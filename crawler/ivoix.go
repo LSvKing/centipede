@@ -232,6 +232,11 @@ func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) 
 
 	if err != nil {
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)
+
+		req := request.NewRequest(response.Request.URL.String()).SetCallback("ParseBook").AddCallParams(params).AddCallParam("bookId", params["bookId"])
+		centipede.AddRequest(req)
+
+		return
 	}
 
 	doc.Find("#sortedList li").Each(func(i int, selection *goquery.Selection) {
