@@ -100,7 +100,7 @@ func (this *IvoixD) ParseUrl() {
 	for iter.Next(&audio) {
 		if len(audio.Path) < 150 {
 
-			req := request.NewRequest(downUrl+audio.Path).AddCallParam("path", audio.Path).SetCallback("Download").AddHeader("User-Agent", "Wget/1.18 (linux-gnu)")
+			req := request.NewRequest(downUrl+audio.Path).AddCallParam("path", audio.Path).SetCallback("Download")
 
 			//header := req.Header{
 			//	"User-Agent": "Wget/1.18 (linux-gnu)",
