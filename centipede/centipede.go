@@ -53,7 +53,7 @@ func GetCentipede() *Centipede {
 func Run() {
 	defer func() {
 		if p := recover(); p != nil {
-			Log.WithField("trace", string(debug.Stack())).Fatalf("蜘蛛异常错误 error: %v", p)
+			Log.WithField("trace", string(debug.Stack())).Errorf("蜘蛛异常错误 error: %v", p)
 		}
 	}()
 
@@ -98,7 +98,7 @@ func Run() {
 			var limiter *rate.Limiter
 
 			if crawler.Option().Limit > 0 {
-				limiter = rate.NewLimiter(crawler.Option().Limit, 1024)
+				limiter = rate.NewLimiter(crawler.Option().Limit, int(crawler.Option().Limit))
 			}
 
 			for {

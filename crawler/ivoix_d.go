@@ -37,8 +37,8 @@ func init() {
 	centipede.AddCrawler(&IvoixD{
 		items.Crawler{
 			Name:         "IvoixD",
-			Thread:       10,
-			Limit:        10,
+			Thread:       1,
+			Limit:        1,
 			DisableProxy: true,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
@@ -46,7 +46,7 @@ func init() {
 					ProxyURL: "http://HR03Y5983TE1C0MD:72DAB06BEF59368F@http-dyn.abuyun.com:9020",
 				},
 			},
-			AutoRun: false,
+			AutoRun: true,
 		},
 	})
 }
@@ -89,7 +89,7 @@ func (this *IvoixD) ParseUrl() {
 
 	c := session.DB("centipede").C("audio")
 
-	iter := c.Find(nil).Iter()
+	iter := c.Find(nil).Limit(10).Iter()
 
 	if err != nil {
 		centipede.Log.Fatalln("db.Open(): %q\n", err)
@@ -100,7 +100,7 @@ func (this *IvoixD) ParseUrl() {
 	for iter.Next(&audio) {
 		if len(audio.Path) < 150 {
 
-			req := request.NewRequest(downUrl+audio.Path).AddCallParam("path", audio.Path).SetCallback("Download")
+			req := request.NewRequest("http://ip.cn").AddCallParam("path", audio.Path).SetCallback("Download")
 
 			//header := req.Header{
 			//	"User-Agent": "Wget/1.18 (linux-gnu)",
@@ -144,7 +144,7 @@ func (this *IvoixD) Download(response *http.Response, params map[string]string) 
 	}
 
 	defer func() {
-		response.Body.Close()
+		//response.Body.Close()
 		f.Close()
 	}()
 }
