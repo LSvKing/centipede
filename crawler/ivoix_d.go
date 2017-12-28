@@ -36,7 +36,7 @@ func init() {
 		items.Crawler{
 			Name:         "IvoixD",
 			Thread:       20,
-			Limit:        10,
+			Limit:        20,
 			DisableProxy: false,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
@@ -87,7 +87,7 @@ func (this *IvoixD) ParseUrl() {
 
 	c := session.DB("centipede").C("audio")
 
-	iter := c.Find(nil).Limit(10).Iter()
+	iter := c.Find(nil).Iter()
 
 	if err != nil {
 		centipede.Log.Fatalln("db.Open(): %q\n", err)
