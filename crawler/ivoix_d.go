@@ -12,6 +12,8 @@ import (
 
 	"centipede/request"
 
+	"path/filepath"
+
 	"github.com/JodeZer/mgop"
 	"gopkg.in/mgo.v2/bson"
 	"upper.io/db.v3/mongo"
@@ -113,6 +115,20 @@ func (this *IvoixD) ParseUrl() {
 func (this *IvoixD) Download(response *http.Response, params map[string]string) {
 	appConfig := config.Get()
 
+	d, err := os.Stat(appConfig.FilePath + filepath.Dir(params["path"]))
+
+	if err != nil || !d.IsDir() {
+		if err := os.MkdirAll(appConfig.FilePath+filepath.Dir(params["path"]), 0777); err != nil {
+			//logs.Log.Error(
+			//	" *     Fail  [文件下载：%v | KEYIN：%v | 批次：%v]   %v [ERROR]  %v\n",
+			//	self.Spider.GetName(), self.Spider.GetKeyin(), atomic.LoadUint64(&self.fileBatch), fileName, err,
+			//)
+
+			centipede.Log.Error("[创建目录]", err)
+			return
+		}
+	}
+
 	f, err := os.OpenFile(appConfig.FilePath+params["path"], os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
 		centipede.Log.Error("[文件下载]", err)
@@ -127,7 +143,10 @@ func (this *IvoixD) Download(response *http.Response, params map[string]string) 
 		return
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		response.Body.Close()
+		f.Close()
+	}()
 }
 
 func (this *IvoixD) Pipeline(data items.DataRow) {
