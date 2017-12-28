@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"fmt"
-
 	"io"
 	"os"
 
@@ -99,9 +97,12 @@ func (this *IvoixD) ParseUrl() {
 
 	for iter.Next(&audio) {
 		if len(audio.Path) < 150 {
-			fmt.Println(audio)
 
-			req := request.NewRequest(downUrl+audio.Path).AddCallParam("path", audio.Path).SetCallback("Download")
+			req := request.NewRequest(downUrl+audio.Path).AddCallParam("path", audio.Path).SetCallback("Download").AddHeader("User-Agent", "Wget/1.18 (linux-gnu)")
+
+			//header := req.Header{
+			//	"User-Agent": "Wget/1.18 (linux-gnu)",
+			//}
 
 			centipede.AddRequest(req)
 		}
