@@ -117,7 +117,7 @@ func (this *IvoixD) Download(response *http.Response, params map[string]string) 
 
 	d, err := os.Stat(appConfig.FilePath + filepath.Dir(params["path"]))
 
-	if err != nil || !d.IsDir() {
+	if err != nil || d.IsDir() {
 		if err := os.MkdirAll(appConfig.FilePath+filepath.Dir(params["path"]), 0777); err != nil {
 			//logs.Log.Error(
 			//	" *     Fail  [文件下载：%v | KEYIN：%v | 批次：%v]   %v [ERROR]  %v\n",
