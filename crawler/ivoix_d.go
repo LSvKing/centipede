@@ -46,7 +46,7 @@ func init() {
 					ProxyURL: "http://HR03Y5983TE1C0MD:72DAB06BEF59368F@http-dyn.abuyun.com:9020",
 				},
 			},
-			AutoRun: true,
+			AutoRun: false,
 		},
 	})
 }
