@@ -20,12 +20,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  name = "github.com/aliyun/aliyun-oss-go-sdk"
-  packages = ["oss"]
-  revision = "6fe16293d6b7af4f5c2450714c5b4825c8ad040c"
-  version = "1.7.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/andybalholm/cascadia"
   packages = ["."]
@@ -136,6 +130,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "81d690d4510955a1dbe6ef78c117a1b7a5721bfacd11189e386fbf4cb0f45c99"
+  inputs-digest = "e71e4ff88a68e864b5513e4536d2733945aa095138246c4d22febb45a02e3f35"
   solver-name = "gps-cdcl"
   solver-version = 1

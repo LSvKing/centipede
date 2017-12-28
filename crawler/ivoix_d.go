@@ -1,0 +1,134 @@
+package crawler
+
+import (
+	"centipede/centipede"
+	"centipede/config"
+	"centipede/items"
+	"net/http"
+	"time"
+
+	"fmt"
+
+	"io"
+	"os"
+
+	"centipede/request"
+
+	"github.com/JodeZer/mgop"
+	"gopkg.in/mgo.v2/bson"
+	"upper.io/db.v3/mongo"
+)
+
+type IvoixD struct {
+	items.Crawler
+}
+
+type Audio struct {
+	ID         bson.ObjectId `bson:"_id"`
+	UpdateTime time.Time     `bson:"updateTime"`
+	BookID     string        `bson:"bookId"`
+	Name       string        `bson:"name"`
+	Aid        string        `bson:"aid"`
+	Path       string        `bson:"path"`
+	IsDownload int           `bson:"isDownload"`
+}
+
+func init() {
+	centipede.AddCrawler(&IvoixD{
+		items.Crawler{
+			Name:         "IvoixD",
+			Thread:       20,
+			Limit:        10,
+			DisableProxy: false,
+			Timeout:      time.Minute * 4,
+			ProxyList: []items.Proxy{
+				{
+					ProxyURL: "http://HR03Y5983TE1C0MD:72DAB06BEF59368F@http-dyn.abuyun.com:9020",
+				},
+			},
+			AutoRun: true,
+		},
+	})
+}
+
+var (
+//siteUrl = "http://m.ivoix.cn"
+//mp3Url  = "http://m.ivoix.cn/inc/audio.asp"
+//downUrl = "http://125.46.58.23"
+)
+
+func (this *IvoixD) Parse(params map[string]string) {
+	this.ParseUrl()
+}
+
+func (this *IvoixD) Option() items.Crawler {
+	return this.Crawler
+}
+
+func (this *IvoixD) ParseUrl() {
+	appConfig := config.Get()
+
+	var settings = mongo.ConnectionURL{
+		Host:     appConfig.Mongo.Host,     // server IP.
+		Database: appConfig.Mongo.Database, // Database name.
+	}
+
+	settings.User = appConfig.Mongo.UserName
+	settings.Password = appConfig.Mongo.PassWord
+
+	p, err := mgop.DialStrongPool("mongodb://"+appConfig.Mongo.Host+":"+appConfig.Mongo.Post, 20)
+
+	//"mongodb://"+appConfig.Mongo.UserName+":"+appConfig.Mongo.PassWord+"@"+appConfig.Mongo.Host+":"+appConfig.Mongo.Post
+	session := p.AcquireSession()
+
+	defer session.Release()
+
+	if err != nil {
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
+	}
+
+	c := session.DB("centipede").C("audio")
+
+	iter := c.Find(nil).Limit(10).Iter()
+
+	if err != nil {
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
+	}
+
+	var audio Audio
+
+	for iter.Next(&audio) {
+		if len(audio.Path) < 150 {
+			fmt.Println(audio)
+
+			req := request.NewRequest(downUrl+audio.Path).AddCallParam("path", audio.Path).SetCallback("Download")
+
+			centipede.AddRequest(req)
+		}
+
+	}
+}
+
+func (this *IvoixD) Download(response *http.Response, params map[string]string) {
+	appConfig := config.Get()
+
+	f, err := os.OpenFile(appConfig.FilePath+params["path"], os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
+	if err != nil {
+		centipede.Log.Error("[文件下载]", err)
+		return
+	}
+
+	//log.Debugf("存储时: %p",&file.Body,file.Body.ContentLength)
+	_, err = io.Copy(f, response.Body)
+
+	if err != nil {
+		centipede.Log.Error("[文件下载]", err)
+		return
+	}
+
+	defer response.Body.Close()
+}
+
+func (this *IvoixD) Pipeline(data items.DataRow) {
+
+}
