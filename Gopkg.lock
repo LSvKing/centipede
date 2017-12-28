@@ -8,6 +8,12 @@
   version = "v0.3.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/JodeZer/mgop"
+  packages = ["."]
+  revision = "c91b2643b1aae2ed7fdd129beef9a49f2704bbc0"
+
+[[projects]]
   name = "github.com/LSvKing/cron"
   packages = ["."]
   revision = "57ac9950da80b6e2c12df9042429278cf8c729eb"
@@ -130,6 +136,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e71e4ff88a68e864b5513e4536d2733945aa095138246c4d22febb45a02e3f35"
+  inputs-digest = "90e93353ee3414a92f4f346ec7070a2e0dd0740295403813190c9f1672a6e80e"
   solver-name = "gps-cdcl"
   solver-version = 1
