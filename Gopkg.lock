@@ -68,6 +68,12 @@
   version = "v1.6.0"
 
 [[projects]]
+  name = "github.com/imroc/req"
+  packages = ["."]
+  revision = "e487483388746c1438a8a81aa3db91177eae2720"
+  version = "v0.1.8"
+
+[[projects]]
   branch = "master"
   name = "github.com/jcelliott/lumber"
   packages = ["."]
@@ -136,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "90e93353ee3414a92f4f346ec7070a2e0dd0740295403813190c9f1672a6e80e"
+  inputs-digest = "8fbe5be045b76599985a35a6d17a170e4cb19fac1922c55ed4f4d64d43364a6d"
   solver-name = "gps-cdcl"
   solver-version = 1
