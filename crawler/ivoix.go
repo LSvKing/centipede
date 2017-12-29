@@ -161,6 +161,13 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	if err != nil {
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)
+
+		req := request.NewRequest(response.Request.URL.String()).SetCallback("ParseBookList").AddCallParam("category", params["category"])
+		req.ReTry += 1
+
+		centipede.AddRequest(req)
+
+		return
 	}
 
 	re := regexp.MustCompile(`book(\d+)`)
