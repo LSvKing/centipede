@@ -18,6 +18,7 @@ import (
 	"os"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/imroc/req"
 	"upper.io/db.v3/mongo"
 )
 
@@ -41,12 +42,26 @@ func init() {
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
 				{
-					ProxyURL: "http://HR03Y5983TE1C0MD:72DAB06BEF59368F@http-dyn.abuyun.com:9020",
+					ProxyURL: getProxy(),
 				},
 			},
 			AutoRun: true,
 		},
 	})
+}
+
+func getProxy() string {
+
+ReGoto:
+	r, err := req.Get("http://api.ip.data5u.com/dynamic/get.html?order=84c69e9ca09386be0d035fc9e50c7389&sep=3")
+
+	if err != nil {
+		goto ReGoto
+	}
+
+	centipede.Log.Debug(r.String())
+
+	return "http://" + strings.TrimSpace(r.String())
 }
 
 func (this *Ivoix) Parse(params map[string]string) {
