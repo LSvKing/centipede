@@ -17,8 +17,6 @@ import (
 	"io"
 	"os"
 
-	"fmt"
-
 	"centipede/common"
 
 	"github.com/PuerkitoBio/goquery"
@@ -263,8 +261,6 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) {
 
 	doc, err := goquery.NewDocumentFromResponse(response)
-
-	fmt.Println(doc.Html())
 
 	if err != nil {
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)
