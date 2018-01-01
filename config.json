@@ -4,7 +4,7 @@
   "Mongo" :{
     "Host" : "127.0.0.1",
     "Post" : "27017",
-    "Database" : "douban"
+    "Database" : "centipede"
   },
   "HttpClient":{
     "ProxyDisable" : false,

@@ -141,12 +141,17 @@ func Run() {
 
 						var rawProxy string
 
-						if len(crawler.Option().ProxyList) > 1 {
-							//从代理持随机取代理
-							rawProxy = crawler.Option().ProxyList[rand.Intn(len(crawler.Option().ProxyList))].ProxyURL
-
+						if crawler.Option().ProxyFun != nil {
+							rawProxy = crawler.Option().ProxyFun()
 						} else {
-							rawProxy = crawler.Option().ProxyList[0].ProxyURL
+
+							if len(crawler.Option().ProxyList) > 1 {
+								//从代理持随机取代理
+								rawProxy = crawler.Option().ProxyList[rand.Intn(len(crawler.Option().ProxyList))].ProxyURL
+
+							} else {
+								rawProxy = crawler.Option().ProxyList[0].ProxyURL
+							}
 						}
 
 						proxy, err := url.Parse(rawProxy)
@@ -156,6 +161,7 @@ func Run() {
 						}
 
 						transport.Proxy = http.ProxyURL(proxy)
+						Log.Debugln(proxy)
 						centipede.Downloader.Client.Transport = transport
 					}
 

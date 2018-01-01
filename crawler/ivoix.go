@@ -17,6 +17,10 @@ import (
 	"io"
 	"os"
 
+	"fmt"
+
+	"centipede/common"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/imroc/req"
 	"upper.io/db.v3/mongo"
@@ -36,26 +40,32 @@ func init() {
 	centipede.AddCrawler(&Ivoix{
 		items.Crawler{
 			Name:         "Ivoix",
-			Thread:       10,
-			Limit:        10,
+			Thread:       7,
+			Limit:        7,
 			DisableProxy: true,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
 				{
-					ProxyURL: getProxy(),
+					ProxyURL: common.GetProxy(),
 				},
 			},
-			AutoRun: true,
+			ProxyFun: GetProxy,
+			AutoRun:  true,
 		},
 	})
 }
 
-func getProxy() string {
+func GetProxy() string {
 
 ReGoto:
-	r, err := req.Get("http://api.ip.data5u.com/dynamic/get.html?order=84c69e9ca09386be0d035fc9e50c7389&sep=3")
+	r, err := req.Get("http://dynamic.goubanjia.com/dynamic/get/73651c483e893aa26273e97adfab83bf.html?random=yes")
 
 	if err != nil {
+		goto ReGoto
+	}
+
+	if r.String() == "too many requests" || r.String() == `{"msg":"请控制好请求频率，1秒内不要超过10次！","success":false}` || r.String() == `<html><head><title>too many request</title></head><body>request too fast, please control the request frequency.</body></html>` {
+		centipede.Log.Errorln(r.String())
 		goto ReGoto
 	}
 
@@ -174,6 +184,10 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	doc, err := goquery.NewDocumentFromResponse(response)
 
+	rete, err := doc.Html()
+
+	fmt.Println(rete)
+
 	if err != nil {
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)
 
@@ -253,6 +267,8 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) {
 
 	doc, err := goquery.NewDocumentFromResponse(response)
+
+	fmt.Println(doc.Html())
 
 	if err != nil {
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)

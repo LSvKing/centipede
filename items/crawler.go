@@ -21,6 +21,7 @@ type Crawler struct {
 	ProxyList    []Proxy           `json:"proxyList"`
 	AutoRun      bool              `json:"autoRun"`
 	CallParams   map[string]string `json:"params"`
+	ProxyFun     func() string
 }
 
 func (crawler Crawler) Register() Crawler {
