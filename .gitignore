@@ -3,3 +3,4 @@ cookie.json
 .idea/*
 /gradle/
 /centipede.iml
+config.json

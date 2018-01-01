@@ -154,6 +154,7 @@ func Run() {
 							}
 						}
 
+						Log.Debugln(rawProxy)
 						proxy, err := url.Parse(rawProxy)
 
 						if err != nil {

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis"
+
 	"centipede/centipede"
 	"centipede/config"
 	"centipede/items"
@@ -17,10 +19,8 @@ import (
 	"io"
 	"os"
 
-	"centipede/common"
-
 	"github.com/PuerkitoBio/goquery"
-	"github.com/imroc/req"
+	"gopkg.in/mgo.v2/bson"
 	"upper.io/db.v3/mongo"
 )
 
@@ -32,22 +32,35 @@ var (
 	siteUrl = "http://m.ivoix.cn"
 	mp3Url  = "http://m.ivoix.cn/inc/audio.asp"
 	downUrl = "http://125.46.58.23"
+
+	appConfig = config.Get()
 )
+
+type Book struct {
+	Title       string `json:"title"`
+	BookID      string `json:"bookId"`
+	Category    string `json:"category"`
+	Author      string `json:"author"`
+	Owner       string `json:"owner"`
+	Image       string `json:"image"`
+	Description string `json:"description"`
+	Count       string `json:"count"`
+}
 
 func init() {
 	centipede.AddCrawler(&Ivoix{
 		items.Crawler{
 			Name:         "Ivoix",
-			Thread:       5,
-			Limit:        5,
+			Thread:       10,
+			Limit:        10,
 			DisableProxy: true,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
 				{
-					ProxyURL: common.GetProxy(),
+					ProxyURL: "http://H196AR4J9408XN6D:F766CDA5666E4627@http-dyn.abuyun.com:9020",
 				},
 			},
-			ProxyFun: GetProxy,
+			ProxyFun: nil,
 			AutoRun:  true,
 		},
 	})
@@ -55,21 +68,23 @@ func init() {
 
 func GetProxy() string {
 
+	appConfig := config.Get()
+
+	//locker := new(sync.Mutex)
+	client := redis.NewClient(&redis.Options{
+		Addr: appConfig.Redis.Host,
+		DB:   1,
+	})
 ReGoto:
-	r, err := req.Get("http://dynamic.goubanjia.com/dynamic/get/73651c483e893aa26273e97adfab83bf.html?random=yes")
-
-	if err != nil {
+	if key, err := client.RandomKey().Result(); err != nil {
 		goto ReGoto
+	} else {
+		if result, err := client.Get(key).Result(); err != nil {
+			goto ReGoto
+		} else {
+			return string(result)
+		}
 	}
-
-	if r.String() == "too many requests" || r.String() == `{"msg":"请控制好请求频率，1秒内不要超过10次！","success":false}` || r.String() == `<html><head><title>too many request</title></head><body>request too fast, please control the request frequency.</body></html>` {
-		centipede.Log.Errorln(r.String())
-		goto ReGoto
-	}
-
-	centipede.Log.Debug(r.String())
-
-	return "http://" + strings.TrimSpace(r.String())
 }
 
 func (this *Ivoix) Parse(params map[string]string) {
@@ -209,6 +224,12 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 			count = strings.Replace(count, "音频：", "", -1)
 		}
 	}
+
+	if !checkBookUpdate(bookID, count) {
+		return
+	}
+
+	//存在且没有更新便跳过
 
 	title := info.Find("h3").Text()
 
@@ -402,8 +423,6 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 		return
 	}
 
-	appConfig := config.Get()
-
 	f, err := os.OpenFile(appConfig.FilePath+"/cover/"+params["bookId"]+".jpg", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
 		centipede.Log.Error("[文件下载]", err)
@@ -422,8 +441,6 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 }
 
 func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
-
-	appConfig := config.Get()
 
 	var settings = mongo.ConnectionURL{
 		Host:     appConfig.Mongo.Host,     // server IP.
@@ -450,4 +467,38 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 	}
 
 	centipede.Log.Debugln(r)
+}
+
+func checkBookUpdate(bookID string, count string) bool {
+
+	var settings = mongo.ConnectionURL{
+		Host:     appConfig.Mongo.Host,     // server IP.
+		Database: appConfig.Mongo.Database, // Database name.
+	}
+
+	settings.User = appConfig.Mongo.UserName
+	settings.Password = appConfig.Mongo.PassWord
+
+	sess, err := mongo.Open(settings)
+
+	if err != nil {
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
+	}
+
+	defer sess.Close() // Remember to close the database session.
+
+	collection := sess.Collection("book")
+
+	var book Book
+
+	if exist, _ := collection.Find(bson.M{"bookId": bookID}).Exists(); exist {
+		collection.Find(bson.M{"bookId": bookID}).One(&book)
+
+		if book.Count == count {
+			return false
+		}
+
+	}
+
+	return true
 }

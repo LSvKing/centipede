@@ -5,11 +5,9 @@ import (
 
 	"centipede/centipede"
 	_ "centipede/crawler"
+	"centipede/service"
 
 	"github.com/gorilla/mux"
-	//"fmt"
-	//"centipede/job"
-	"centipede/service"
 )
 
 func main() {
