@@ -161,7 +161,6 @@ func Run() {
 						}
 
 						transport.Proxy = http.ProxyURL(proxy)
-						Log.Debugln(proxy)
 						centipede.Downloader.Client.Transport = transport
 					}
 
