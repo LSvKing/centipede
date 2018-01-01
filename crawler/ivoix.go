@@ -184,10 +184,6 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 
 	doc, err := goquery.NewDocumentFromResponse(response)
 
-	rete, err := doc.Html()
-
-	fmt.Println(rete)
-
 	if err != nil {
 		centipede.Log.Errorln("NewDocumentFromResponse : ", err)
 
