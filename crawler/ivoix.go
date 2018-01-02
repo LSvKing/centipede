@@ -419,7 +419,7 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 	//	centipede.Log.Errorln("oss PutObject", "cover/"+params["bookId"]+".jpg", err)
 	//}
 
-	if response.Request.URL.String() == "null" {
+	if response.Request.URL.String() == "null" || response.Request.URL.String() == "http://cover.ivoix.cn" {
 		return
 	}
 
