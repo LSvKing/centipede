@@ -37,14 +37,14 @@ var (
 )
 
 type Book struct {
-	Title       string `json:"title"`
-	BookID      string `json:"bookId"`
-	Category    string `json:"category"`
-	Author      string `json:"author"`
-	Owner       string `json:"owner"`
-	Image       string `json:"image"`
-	Description string `json:"description"`
-	Count       string `json:"count"`
+	Title       string `bson:"title"`
+	BookID      string `bson:"bookId"`
+	Category    string `bson:"category"`
+	Author      string `bson:"author"`
+	Owner       string `bson:"owner"`
+	Image       string `bson:"image"`
+	Description string `bson:"description"`
+	Count       string `bson:"count"`
 }
 
 func init() {
@@ -134,18 +134,48 @@ func (this *Ivoix) Pipeline(data items.DataRow) {
 
 func (this *Ivoix) ParseUrl() {
 
-	fenLeiUrl := "http://m.ivoix.cn/fenlei"
-
-	for i := 1; i <= 91; i++ {
-		u := fenLeiUrl + strconv.Itoa(i)
-		req := request.NewRequest(u).SetCallback("ParseFenUrl")
-
-		centipede.AddRequest(req)
-	}
+	//fenLeiUrl := "http://m.ivoix.cn/fenlei"
+	//
+	//for i := 1; i <= 91; i++ {
+	//	u := fenLeiUrl + strconv.Itoa(i)
+	//	req := request.NewRequest(u).SetCallback("ParseFenUrl")
+	//
+	//	centipede.AddRequest(req)
+	//}
 
 	//req := request.NewRequest(u).SetCallback("ParseFenUrl")
 
 	//centipede.AddRequest(req)
+
+	var settings = mongo.ConnectionURL{
+		Host:     appConfig.Mongo.Host,     // server IP.
+		Database: appConfig.Mongo.Database, // Database name.
+	}
+
+	settings.User = appConfig.Mongo.UserName
+	settings.Password = appConfig.Mongo.PassWord
+
+	sess, err := mongo.Open(settings)
+
+	if err != nil {
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
+	}
+
+	defer sess.Close() // Remember to close the database session.
+
+	collection := sess.Collection("book")
+
+	var book Book
+
+	books := collection.Find()
+
+	for books.Next(&book) {
+		req := request.NewRequest("http://m.ivoix.cn/book"+book.BookID).SetCallback("ParseBookList").AddCallParam("category", book.Category)
+		centipede.AddRequest(req)
+		//fmt.Println("http://m.ivoix.cn/book" + book.BookID)
+		//fmt.Println(book.BookID)
+	}
+
 }
 
 func (this *Ivoix) ParseFenUrl(response *http.Response) {
@@ -297,7 +327,7 @@ func (this *Ivoix) ParseBook(response *http.Response, params map[string]string) 
 	doc.Find("#sortedList li").Each(func(i int, selection *goquery.Selection) {
 		aid := selection.Find("span").Eq(0).AttrOr("kv", "null")
 
-		if aid != "null" {
+		if aid != "null" && checkAudioUpdate(aid) {
 			name := selection.Find("span").Eq(0).AttrOr("kt", "null")
 
 			req := request.NewRequest(mp3Url).SetMethod("POST").
@@ -501,4 +531,36 @@ func checkBookUpdate(bookID string, count string) bool {
 	}
 
 	return true
+}
+
+//检查Audio 是否存在 是否需要更新
+func checkAudioUpdate(aid string) bool {
+	var settings = mongo.ConnectionURL{
+		Host:     appConfig.Mongo.Host,     // server IP.
+		Database: appConfig.Mongo.Database, // Database name.
+	}
+
+	settings.User = appConfig.Mongo.UserName
+	settings.Password = appConfig.Mongo.PassWord
+
+	sess, err := mongo.Open(settings)
+
+	if err != nil {
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
+	}
+
+	defer sess.Close() // Remember to close the database session.
+
+	collection := sess.Collection("audio")
+
+	if exist, _ := collection.Find(bson.M{"aid": aid}).Exists(); exist {
+		return false
+	} else {
+		return true
+	}
+
+}
+
+func getBooks() {
+
 }
