@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/JodeZer/mgop"
 	"github.com/go-redis/redis"
 
 	"centipede/centipede"
@@ -21,7 +22,6 @@ import (
 
 	"fmt"
 
-	"github.com/JodeZer/mgop"
 	"github.com/PuerkitoBio/goquery"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -67,10 +67,22 @@ func init() {
 			AutoRun:  true,
 		},
 	})
+
+	mongoUrl := ""
+
+	if appConfig.Mongo.UserName != "" {
+		mongoUrl = "mongodb://" + appConfig.Mongo.UserName + ":" + appConfig.Mongo.PassWord + "@" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
+	} else {
+		mongoUrl = "mongodb://" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
+	}
+	p, err := mgop.DialStrongPool(mongoUrl, 200)
+
+	session := p.AcquireSession()
+	defer session.Release()
+
 }
 
 func GetProxy() string {
-
 	appConfig := config.Get()
 
 	//locker := new(sync.Mutex)
@@ -429,7 +441,10 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 
 func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
-	db := getMongoDb()
+	session := getMongoSession()
+	defer session.Close()
+
+	db := session.DB(appConfig.Mongo.Database)
 
 	c := db.C(collection)
 
@@ -442,7 +457,10 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
 func upsetMongo(selector interface{}, data map[string]interface{}, collection string) {
 
-	db := getMongoDb()
+	session := getMongoSession()
+	defer session.Close()
+
+	db := session.DB(appConfig.Mongo.Database)
 
 	c := db.C(collection)
 
@@ -457,7 +475,10 @@ func upsetMongo(selector interface{}, data map[string]interface{}, collection st
 
 func checkBookUpdate(bookID string, count string) bool {
 
-	db := getMongoDb()
+	session := getMongoSession()
+	defer session.Close()
+
+	db := session.DB(appConfig.Mongo.Database)
 
 	collection := db.C("book")
 
@@ -474,7 +495,10 @@ func checkBookUpdate(bookID string, count string) bool {
 
 //检查Audio 是否存在 是否需要更新
 func checkAudioUpdate(aid string) bool {
-	db := getMongoDb()
+	session := getMongoSession()
+	defer session.Close()
+
+	db := session.DB(appConfig.Mongo.Database)
 
 	collection := db.C("book")
 
@@ -495,9 +519,12 @@ func getMongoDb() *mgo.Database {
 	} else {
 		mongoUrl = "mongodb://" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
 	}
-	p, err := mgop.DialStrongPool(mongoUrl, 20)
-	session := p.AcquireSession()
-	defer session.Release()
+	//p, err := mgop.DialStrongPool(mongoUrl, 200)
+	//session := p.AcquireSession()
+	//defer session.Release()
+
+	session, err := mgo.Dial(mongoUrl)
+	//defer session.Close()
 
 	if err != nil {
 		centipede.Log.Fatalln("db.Open(): %q\n", err)
@@ -506,4 +533,27 @@ func getMongoDb() *mgo.Database {
 	db := session.DB(appConfig.Mongo.Database)
 
 	return db
+}
+
+func getMongoSession() *mgo.Session {
+
+	mongoUrl := ""
+
+	if appConfig.Mongo.UserName != "" {
+		mongoUrl = "mongodb://" + appConfig.Mongo.UserName + ":" + appConfig.Mongo.PassWord + "@" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
+	} else {
+		mongoUrl = "mongodb://" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
+	}
+	//p, err := mgop.DialStrongPool(mongoUrl, 200)
+	//session := p.AcquireSession()
+	//defer session.Release()
+
+	session, err := mgo.Dial(mongoUrl)
+	//defer session.Close()
+
+	if err != nil {
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
+	}
+
+	return session
 }
