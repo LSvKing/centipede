@@ -21,8 +21,8 @@ import (
 
 	"fmt"
 
+	"github.com/JodeZer/mgop"
 	"github.com/PuerkitoBio/goquery"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -36,6 +36,8 @@ var (
 	downUrl = "http://125.46.58.23"
 
 	appConfig = config.Get()
+
+	mg mgop.SessionPool
 )
 
 type Book struct {
@@ -66,6 +68,8 @@ func init() {
 			AutoRun:  true,
 		},
 	})
+
+	mg = getMongoSession()
 }
 
 func GetProxy() string {
@@ -427,8 +431,8 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 
 func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
-	session := getMongoSession()
-	defer session.Close()
+	session := mg.AcquireSession()
+	defer session.Release()
 
 	db := session.DB(appConfig.Mongo.Database)
 
@@ -443,8 +447,8 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
 func upsetMongo(selector interface{}, data map[string]interface{}, collection string) {
 
-	session := getMongoSession()
-	defer session.Close()
+	session := mg.AcquireSession()
+	defer session.Release()
 
 	db := session.DB(appConfig.Mongo.Database)
 
@@ -460,9 +464,8 @@ func upsetMongo(selector interface{}, data map[string]interface{}, collection st
 }
 
 func checkBookUpdate(bookID string, count string) bool {
-
-	session := getMongoSession()
-	defer session.Close()
+	session := mg.AcquireSession()
+	defer session.Release()
 
 	db := session.DB(appConfig.Mongo.Database)
 
@@ -481,8 +484,8 @@ func checkBookUpdate(bookID string, count string) bool {
 
 //检查Audio 是否存在 是否需要更新
 func checkAudioUpdate(aid string) bool {
-	session := getMongoSession()
-	defer session.Close()
+	session := mg.AcquireSession()
+	defer session.Release()
 
 	db := session.DB(appConfig.Mongo.Database)
 
@@ -496,7 +499,7 @@ func checkAudioUpdate(aid string) bool {
 
 }
 
-func getMongoSession() *mgo.Session {
+func getMongoSession() mgop.SessionPool {
 
 	mongoUrl := ""
 
@@ -509,12 +512,12 @@ func getMongoSession() *mgo.Session {
 	//session := p.AcquireSession()
 	//defer session.Release()
 
-	session, err := mgo.Dial(mongoUrl)
+	session, err := mgop.DialStrongPool(mongoUrl, 60)
 	//defer session.Close()
 
 	if err != nil {
 		centipede.Log.Fatalln("db.Open(): %q\n", err)
 	}
 
-	return session.Copy()
+	return session
 }
