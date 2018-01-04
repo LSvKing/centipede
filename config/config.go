@@ -10,7 +10,7 @@ type (
 		Mongo struct {
 			Host     string `default:"127.0.0.1"`
 			Database string
-			Post     string `default:"27017"`
+			Port     string `default:"27017"`
 			UserName string
 			PassWord string
 		}

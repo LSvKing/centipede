@@ -76,7 +76,7 @@ func (this *IvoixD) ParseUrl() {
 	settings.User = appConfig.Mongo.UserName
 	settings.Password = appConfig.Mongo.PassWord
 
-	p, err := mgop.DialStrongPool("mongodb://"+appConfig.Mongo.Host+":"+appConfig.Mongo.Post, 20)
+	p, err := mgop.DialStrongPool("mongodb://"+appConfig.Mongo.Host+":"+appConfig.Mongo.Port, 20)
 
 	//"mongodb://"+appConfig.Mongo.UserName+":"+appConfig.Mongo.PassWord+"@"+appConfig.Mongo.Host+":"+appConfig.Mongo.Post
 	session := p.AcquireSession()

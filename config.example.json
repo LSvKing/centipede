@@ -3,7 +3,7 @@
   "FilePath" : "/data/",
   "Mongo" :{
     "Host" : "127.0.0.1",
-    "Post" : "27017",
+    "Port" : "27017",
     "Database" : "douban"
   },
   "HttpClient":{

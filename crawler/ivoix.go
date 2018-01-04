@@ -19,9 +19,12 @@ import (
 	"io"
 	"os"
 
+	"fmt"
+
+	"github.com/JodeZer/mgop"
 	"github.com/PuerkitoBio/goquery"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"upper.io/db.v3/mongo"
 )
 
 type Ivoix struct {
@@ -96,85 +99,44 @@ func (this *Ivoix) Option() items.Crawler {
 }
 
 func (this *Ivoix) Pipeline(data items.DataRow) {
-
-	appConfig := config.Get()
-
-	var settings = mongo.ConnectionURL{
-		Host:     appConfig.Mongo.Host,     // server IP.
-		Database: appConfig.Mongo.Database, // Database name.
-	}
-
-	settings.User = appConfig.Mongo.UserName
-	settings.Password = appConfig.Mongo.PassWord
-
-	sess, err := mongo.Open(settings)
-
-	if err != nil {
-		centipede.Log.Fatalln("db.Open(): %q\n", err)
-	}
-
-	defer sess.Close() // Remember to close the database session.
-
-	collection := sess.Collection(data.Collection)
-
-	mongoData := make(map[string]interface{})
-
-	for _, v := range data.Data {
-		mongoData[v.Field] = v.Value
-	}
-
-	r, err := collection.Insert(mongoData)
-
-	if err != nil {
-		centipede.Log.Errorln(err)
-	}
-
-	centipede.Log.Debugln(r)
 }
 
 func (this *Ivoix) ParseUrl() {
 
-	//fenLeiUrl := "http://m.ivoix.cn/fenlei"
-	//
-	//for i := 1; i <= 91; i++ {
-	//	u := fenLeiUrl + strconv.Itoa(i)
-	//	req := request.NewRequest(u).SetCallback("ParseFenUrl")
-	//
-	//	centipede.AddRequest(req)
-	//}
-
-	//req := request.NewRequest(u).SetCallback("ParseFenUrl")
-
-	//centipede.AddRequest(req)
-
-	var settings = mongo.ConnectionURL{
-		Host:     appConfig.Mongo.Host,     // server IP.
-		Database: appConfig.Mongo.Database, // Database name.
-	}
-
-	settings.User = appConfig.Mongo.UserName
-	settings.Password = appConfig.Mongo.PassWord
-
-	sess, err := mongo.Open(settings)
+	req := request.NewRequest("http://m.ivoix.cn/nav")
+	response, err := centipede.Downloader(req)
 
 	if err != nil {
-		centipede.Log.Fatalln("db.Open(): %q\n", err)
+		centipede.Log.Errorln("nav", err)
 	}
 
-	defer sess.Close() // Remember to close the database session.
+	doc, err := goquery.NewDocumentFromResponse(response)
 
-	collection := sess.Collection("book")
-
-	var book Book
-
-	books := collection.Find()
-
-	for books.Next(&book) {
-		req := request.NewRequest("http://m.ivoix.cn/book"+book.BookID).SetCallback("ParseBookList").AddCallParam("category", book.Category)
-		centipede.AddRequest(req)
-		//fmt.Println("http://m.ivoix.cn/book" + book.BookID)
-		//fmt.Println(book.BookID)
+	if err != nil {
+		centipede.Log.Errorln("NewDocumentFromResponse", err)
 	}
+
+	doc.Find(".bookList div").Each(func(i int, selection *goquery.Selection) {
+
+		if dataRole, ok := selection.Attr("data-role"); ok {
+			if dataRole == "collapsible" {
+
+				selection.Find("li a").Each(func(i int, selection *goquery.Selection) {
+
+					if href, exist := selection.Attr("href"); exist {
+						fmt.Println(siteUrl + href)
+
+						req := request.NewRequest(siteUrl + href).SetCallback("ParseFenUrl")
+						centipede.AddRequest(req)
+
+						upsetMongo(bson.M{"name": selection.Text()}, map[string]interface{}{
+							"name": selection.Text(),
+						}, "category")
+					}
+				})
+			}
+		}
+	})
 
 }
 
@@ -205,10 +167,6 @@ func (this *Ivoix) ParseFenList(response *http.Response) {
 	}
 
 	pagetit := doc.Find(".pagetit span").Eq(0).Text()
-
-	this.InsertMongo(map[string]interface{}{
-		"name": pagetit,
-	}, "category")
 
 	doc.Find(".searchul li").Each(func(i int, selection *goquery.Selection) {
 		_, ok := selection.Attr("data-role")
@@ -255,11 +213,10 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 		}
 	}
 
+	//存在且没有更新便跳过
 	if !checkBookUpdate(bookID, count) {
 		return
 	}
-
-	//存在且没有更新便跳过
 
 	title := info.Find("h3").Text()
 
@@ -294,7 +251,7 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 		"count":       count,
 	}
 
-	this.InsertMongo(p, "book")
+	upsetMongo(bson.M{"bookId": bookID}, p, "book")
 
 	if image != "null" {
 		reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
@@ -360,7 +317,7 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 		centipede.Log.Errorln("error : (filePath) > 200", filePath)
 
 		req := request.NewRequest(mp3Url).SetMethod("POST").
-			AddHeader("Cookie", "safedog-flow-item=; lygusername=lsvking; userid=427591; ASPSESSIONIDQSTSTBCS=FKCGENOCPGGAJJCPNGEAFMIH; apwd=lsv324000; userid=427591; aname=lsvking; lyguserpwd=lsv324000; hisArt=%5B%7B%22title%22%3A%22%E5%A4%A9%E4%BD%93%E6%82%AC%E6%B5%AE%22%2C%22url%22%3A%22%2Fbook23549%22%7D%2C%7B%22title%22%3A%22%E5%87%AF%E5%8F%94%E8%A5%BF%E6%B8%B8%E8%AE%B0_1-5%E9%83%A8%E5%85%A8%E9%9B%86%22%2C%22url%22%3A%22%2Fbook23536%22%7D%2C%7B%22title%22%3A%22%E5%86%92%E6%AD%BB%E8%AE%B0%E5%BD%95%E7%A5%9E%E7%A7%98%E4%BA%8B%E4%BB%B64_%E9%9D%92%E9%9B%AA%E6%95%85%E4%BA%8B%22%2C%22url%22%3A%22%2Fbook22737%22%7D%2C%7B%22title%22%3A%22undefined%22%2C%22url%22%3A%22undefined%22%7D%2C%7B%22title%22%3A%22%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A0%91_1Q84%22%2C%22url%22%3A%22%2Fbook23556%22%7D%2C%7B%22title%22%3A%22%E8%8B%8F%E9%BA%BB%E5%96%87%E5%A7%91%E4%BC%A0%22%2C%22url%22%3A%22%2Fbook23543%22%7D%2C%7B%22title%22%3A%22%E5%88%9D%E4%B8%AD%E7%94%9F%E5%BF%85%E8%83%8C%E5%8F%A4%E8%AF%97%E6%96%87%E6%A0%87%E5%87%86%E6%9C%97%E8%AF%B5%22%2C%22url%22%3A%22%2Fbook23513%22%7D%5D").
+			AddHeader("Cookie", "ASPSESSIONIDCCQBCACB=COPINMMCPFMCOJIMCFPOMKLP; safedog-flow-item=; apwd=lsv324000; userid=427475; aname=13264180593").
 			AddPostParam("aid", params["aid"]).AddPostParam("uname", "lsvking").AddCallParam("aid", params["aid"]).AddCallParams(params).AddCallParam("name", params["name"]).
 			SetCallback("ParseMp3")
 
@@ -387,7 +344,7 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 		"updateTime": time.Now(),
 	}
 
-	this.InsertMongo(p, "audio")
+	upsetMongo(bson.M{"aid": params["aid"]}, p, "audio")
 
 	defer response.Body.Close()
 }
@@ -472,25 +429,24 @@ func (this *Ivoix) DownloadCover(response *http.Response, params map[string]stri
 
 func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
-	var settings = mongo.ConnectionURL{
-		Host:     appConfig.Mongo.Host,     // server IP.
-		Database: appConfig.Mongo.Database, // Database name.
-	}
+	db := getMongoDb()
 
-	settings.User = appConfig.Mongo.UserName
-	settings.Password = appConfig.Mongo.PassWord
+	c := db.C(collection)
 
-	sess, err := mongo.Open(settings)
+	err := c.Insert(data)
 
 	if err != nil {
-		centipede.Log.Fatalln("db.Open(): %q\n", err)
+		centipede.Log.Errorln(err)
 	}
+}
 
-	defer sess.Close() // Remember to close the database session.
+func upsetMongo(selector interface{}, data map[string]interface{}, collection string) {
 
-	c := sess.Collection(collection)
+	db := getMongoDb()
 
-	r, err := c.Insert(data)
+	c := db.C(collection)
+
+	r, err := c.Upsert(selector, data)
 
 	if err != nil {
 		centipede.Log.Errorln(err)
@@ -501,33 +457,16 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 
 func checkBookUpdate(bookID string, count string) bool {
 
-	var settings = mongo.ConnectionURL{
-		Host:     appConfig.Mongo.Host,     // server IP.
-		Database: appConfig.Mongo.Database, // Database name.
-	}
+	db := getMongoDb()
 
-	settings.User = appConfig.Mongo.UserName
-	settings.Password = appConfig.Mongo.PassWord
-
-	sess, err := mongo.Open(settings)
-
-	if err != nil {
-		centipede.Log.Fatalln("db.Open(): %q\n", err)
-	}
-
-	defer sess.Close() // Remember to close the database session.
-
-	collection := sess.Collection("book")
+	collection := db.C("book")
 
 	var book Book
 
-	if exist, _ := collection.Find(bson.M{"bookId": bookID}).Exists(); exist {
-		collection.Find(bson.M{"bookId": bookID}).One(&book)
-
+	if err := collection.Find(bson.M{"bookId": bookID}).One(&book); err == nil {
 		if book.Count == count {
 			return false
 		}
-
 	}
 
 	return true
@@ -535,25 +474,11 @@ func checkBookUpdate(bookID string, count string) bool {
 
 //检查Audio 是否存在 是否需要更新
 func checkAudioUpdate(aid string) bool {
-	var settings = mongo.ConnectionURL{
-		Host:     appConfig.Mongo.Host,     // server IP.
-		Database: appConfig.Mongo.Database, // Database name.
-	}
+	db := getMongoDb()
 
-	settings.User = appConfig.Mongo.UserName
-	settings.Password = appConfig.Mongo.PassWord
+	collection := db.C("book")
 
-	sess, err := mongo.Open(settings)
-
-	if err != nil {
-		centipede.Log.Fatalln("db.Open(): %q\n", err)
-	}
-
-	defer sess.Close() // Remember to close the database session.
-
-	collection := sess.Collection("audio")
-
-	if exist, _ := collection.Find(bson.M{"aid": aid}).Exists(); exist {
+	if exist, _ := collection.Find(bson.M{"aid": aid}).Count(); exist > 0 {
 		return false
 	} else {
 		return true
@@ -561,6 +486,24 @@ func checkAudioUpdate(aid string) bool {
 
 }
 
-func getBooks() {
+func getMongoDb() *mgo.Database {
 
+	mongoUrl := ""
+
+	if appConfig.Mongo.UserName != "" {
+		mongoUrl = "mongodb://" + appConfig.Mongo.UserName + ":" + appConfig.Mongo.PassWord + "@" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
+	} else {
+		mongoUrl = "mongodb://" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
+	}
+	p, err := mgop.DialStrongPool(mongoUrl, 20)
+	session := p.AcquireSession()
+	defer session.Release()
+
+	if err != nil {
+		centipede.Log.Fatalln("db.Open(): %q\n", err)
+	}
+
+	db := session.DB(appConfig.Mongo.Database)
+
+	return db
 }
