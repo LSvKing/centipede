@@ -24,8 +24,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"upper.io/db.v3"
-	"upper.io/db.v3/mongo"
 )
 
 type Ivoix struct {
@@ -129,7 +127,7 @@ func (this *Ivoix) ParseUrl() {
 						req := request.NewRequest(siteUrl + href).SetCallback("ParseFenUrl")
 						centipede.AddRequest(req)
 
-						updateMongo(bson.M{"name": selection.Text()}, map[string]interface{}{
+						upsetMongo(bson.M{"name": selection.Text()}, map[string]interface{}{
 							"name": selection.Text(),
 						}, "category")
 					}
@@ -251,7 +249,7 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 		"count":       count,
 	}
 
-	updateMongo(bson.M{"bookId": bookID}, p, "book")
+	upsetMongo(bson.M{"bookId": bookID}, p, "book")
 
 	if image != "null" {
 		reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
@@ -344,7 +342,7 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 		"updateTime": time.Now(),
 	}
 
-	updateMongo(bson.M{"aid": params["aid"]}, p, "audio")
+	upsetMongo(bson.M{"aid": params["aid"]}, p, "audio")
 
 	defer response.Body.Close()
 }
@@ -432,27 +430,33 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 	session := getMongoSession()
 	defer session.Close()
 
-	c := session.Collection(collection)
+	db := session.DB(appConfig.Mongo.Database)
 
-	_, err := c.Insert(data)
+	c := db.C(collection)
+
+	err := c.Insert(data)
 
 	if err != nil {
 		centipede.Log.Errorln(err)
 	}
 }
 
-func updateMongo(selector interface{}, data map[string]interface{}, collection string) {
+func upsetMongo(selector interface{}, data map[string]interface{}, collection string) {
 
 	session := getMongoSession()
 	defer session.Close()
 
-	c := session.Collection(collection)
+	db := session.DB(appConfig.Mongo.Database)
 
-	err := c.Find(selector).Update(data)
+	c := db.C(collection)
+
+	r, err := c.Upsert(selector, data)
 
 	if err != nil {
 		centipede.Log.Errorln(err)
 	}
+
+	centipede.Log.Debugln(r)
 }
 
 func checkBookUpdate(bookID string, count string) bool {
@@ -460,12 +464,13 @@ func checkBookUpdate(bookID string, count string) bool {
 	session := getMongoSession()
 	defer session.Close()
 
-	collection := session.Collection("book")
+	db := session.DB(appConfig.Mongo.Database)
+
+	collection := db.C("book")
 
 	var book Book
 
-	if exist, _ := collection.Find(bson.M{"bookId": bookID}).Exists(); exist {
-		collection.Find(bson.M{"bookId": bookID}).One(&book)
+	if err := collection.Find(bson.M{"bookId": bookID}).One(&book); err == nil {
 		if book.Count == count {
 			return false
 		}
@@ -479,9 +484,11 @@ func checkAudioUpdate(aid string) bool {
 	session := getMongoSession()
 	defer session.Close()
 
-	collection := session.Collection("audio")
+	db := session.DB(appConfig.Mongo.Database)
 
-	if exist, _ := collection.Find(bson.M{"aid": aid}).Exists(); exist {
+	collection := db.C("book")
+
+	if exist, _ := collection.Find(bson.M{"aid": aid}).Count(); exist > 0 {
 		return false
 	} else {
 		return true
@@ -489,7 +496,7 @@ func checkAudioUpdate(aid string) bool {
 
 }
 
-func getMongoDb() *mgo.Database {
+func getMongoSession() *mgo.Session {
 
 	mongoUrl := ""
 
@@ -509,27 +516,5 @@ func getMongoDb() *mgo.Database {
 		centipede.Log.Fatalln("db.Open(): %q\n", err)
 	}
 
-	db := session.DB(appConfig.Mongo.Database)
-
-	return db
-}
-
-func getMongoSession() db.Database {
-	var settings = mongo.ConnectionURL{
-		Host:     appConfig.Mongo.Host,     // PostgreSQL server IP or name.
-		Database: appConfig.Mongo.Database, // Database name.
-	}
-
-	if appConfig.Mongo.UserName != "" {
-		settings.User = appConfig.Mongo.UserName
-		settings.Password = appConfig.Mongo.PassWord
-	}
-
-	session, err := mongo.Open(settings)
-
-	if err != nil {
-		centipede.Log.Fatalln("db.Open(): %q\n", err)
-	}
-
-	return session
+	return session.Copy()
 }
