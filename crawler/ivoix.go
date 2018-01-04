@@ -531,5 +531,5 @@ func getMongoSession() db.Database {
 		centipede.Log.Fatalln("db.Open(): %q\n", err)
 	}
 
-	return &session
+	return session
 }
