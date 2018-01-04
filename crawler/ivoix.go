@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JodeZer/mgop"
 	"github.com/go-redis/redis"
 
 	"centipede/centipede"
@@ -67,19 +66,6 @@ func init() {
 			AutoRun:  true,
 		},
 	})
-
-	mongoUrl := ""
-
-	if appConfig.Mongo.UserName != "" {
-		mongoUrl = "mongodb://" + appConfig.Mongo.UserName + ":" + appConfig.Mongo.PassWord + "@" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
-	} else {
-		mongoUrl = "mongodb://" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
-	}
-	p, err := mgop.DialStrongPool(mongoUrl, 200)
-
-	session := p.AcquireSession()
-	defer session.Release()
-
 }
 
 func GetProxy() string {
