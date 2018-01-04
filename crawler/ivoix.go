@@ -24,6 +24,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"upper.io/db.v3"
+	"upper.io/db.v3/mongo"
 )
 
 type Ivoix struct {
@@ -127,7 +129,7 @@ func (this *Ivoix) ParseUrl() {
 						req := request.NewRequest(siteUrl + href).SetCallback("ParseFenUrl")
 						centipede.AddRequest(req)
 
-						upsetMongo(bson.M{"name": selection.Text()}, map[string]interface{}{
+						updateMongo(bson.M{"name": selection.Text()}, map[string]interface{}{
 							"name": selection.Text(),
 						}, "category")
 					}
@@ -249,7 +251,7 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 		"count":       count,
 	}
 
-	upsetMongo(bson.M{"bookId": bookID}, p, "book")
+	updateMongo(bson.M{"bookId": bookID}, p, "book")
 
 	if image != "null" {
 		reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
@@ -342,7 +344,7 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 		"updateTime": time.Now(),
 	}
 
-	upsetMongo(bson.M{"aid": params["aid"]}, p, "audio")
+	updateMongo(bson.M{"aid": params["aid"]}, p, "audio")
 
 	defer response.Body.Close()
 }
@@ -430,33 +432,27 @@ func (this *Ivoix) InsertMongo(data map[string]interface{}, collection string) {
 	session := getMongoSession()
 	defer session.Close()
 
-	db := session.DB(appConfig.Mongo.Database)
+	c := session.Collection(collection)
 
-	c := db.C(collection)
-
-	err := c.Insert(data)
+	_, err := c.Insert(data)
 
 	if err != nil {
 		centipede.Log.Errorln(err)
 	}
 }
 
-func upsetMongo(selector interface{}, data map[string]interface{}, collection string) {
+func updateMongo(selector interface{}, data map[string]interface{}, collection string) {
 
 	session := getMongoSession()
 	defer session.Close()
 
-	db := session.DB(appConfig.Mongo.Database)
+	c := session.Collection(collection)
 
-	c := db.C(collection)
-
-	r, err := c.Upsert(selector, data)
+	err := c.Find(selector).Update(data)
 
 	if err != nil {
 		centipede.Log.Errorln(err)
 	}
-
-	centipede.Log.Debugln(r)
 }
 
 func checkBookUpdate(bookID string, count string) bool {
@@ -464,13 +460,12 @@ func checkBookUpdate(bookID string, count string) bool {
 	session := getMongoSession()
 	defer session.Close()
 
-	db := session.DB(appConfig.Mongo.Database)
-
-	collection := db.C("book")
+	collection := session.Collection("book")
 
 	var book Book
 
-	if err := collection.Find(bson.M{"bookId": bookID}).One(&book); err == nil {
+	if exist, _ := collection.Find(bson.M{"bookId": bookID}).Exists(); exist {
+		collection.Find(bson.M{"bookId": bookID}).One(&book)
 		if book.Count == count {
 			return false
 		}
@@ -484,11 +479,9 @@ func checkAudioUpdate(aid string) bool {
 	session := getMongoSession()
 	defer session.Close()
 
-	db := session.DB(appConfig.Mongo.Database)
+	collection := session.Collection("audio")
 
-	collection := db.C("book")
-
-	if exist, _ := collection.Find(bson.M{"aid": aid}).Count(); exist > 0 {
+	if exist, _ := collection.Find(bson.M{"aid": aid}).Exists(); exist {
 		return false
 	} else {
 		return true
@@ -521,25 +514,22 @@ func getMongoDb() *mgo.Database {
 	return db
 }
 
-func getMongoSession() *mgo.Session {
-
-	mongoUrl := ""
+func getMongoSession() db.Database {
+	var settings = mongo.ConnectionURL{
+		Host:     appConfig.Mongo.Host,     // PostgreSQL server IP or name.
+		Database: appConfig.Mongo.Database, // Database name.
+	}
 
 	if appConfig.Mongo.UserName != "" {
-		mongoUrl = "mongodb://" + appConfig.Mongo.UserName + ":" + appConfig.Mongo.PassWord + "@" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
-	} else {
-		mongoUrl = "mongodb://" + appConfig.Mongo.Host + ":" + appConfig.Mongo.Port + "/" + appConfig.Mongo.Database
+		settings.User = appConfig.Mongo.UserName
+		settings.Password = appConfig.Mongo.PassWord
 	}
-	//p, err := mgop.DialStrongPool(mongoUrl, 200)
-	//session := p.AcquireSession()
-	//defer session.Release()
 
-	session, err := mgo.Dial(mongoUrl)
-	//defer session.Close()
+	session, err := mongo.Open(settings)
 
 	if err != nil {
 		centipede.Log.Fatalln("db.Open(): %q\n", err)
 	}
 
-	return session
+	return &session
 }
