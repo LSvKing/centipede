@@ -19,6 +19,8 @@ import (
 	"io"
 	"os"
 
+	"fmt"
+
 	"github.com/JodeZer/mgop"
 	"github.com/PuerkitoBio/goquery"
 	"gopkg.in/mgo.v2/bson"
@@ -103,40 +105,40 @@ func (this *Ivoix) Pipeline(data items.DataRow) {
 
 func (this *Ivoix) ParseUrl() {
 
-	//req := request.NewRequest("http://m.ivoix.cn/nav")
-	//response, err := centipede.Downloader(req)
-	//
-	//if err != nil {
-	//	centipede.Log.Errorln("nav", err)
-	//}
-	//
-	//doc, err := goquery.NewDocumentFromResponse(response)
-	//
-	//if err != nil {
-	//	centipede.Log.Errorln("NewDocumentFromResponse", err)
-	//}
-	//
-	//doc.Find(".bookList div").Each(func(i int, selection *goquery.Selection) {
-	//
-	//	if dataRole, ok := selection.Attr("data-role"); ok {
-	//		if dataRole == "collapsible" {
-	//
-	//			selection.Find("li a").Each(func(i int, selection *goquery.Selection) {
-	//
-	//				if href, exist := selection.Attr("href"); exist {
-	//					fmt.Println(siteUrl + href)
-	//
-	//					req := request.NewRequest(siteUrl + href).SetCallback("ParseFenUrl")
-	//					centipede.AddRequest(req)
-	//
-	//					upsetMongo(bson.M{"name": selection.Text()}, map[string]interface{}{
-	//						"name": selection.Text(),
-	//					}, "category")
-	//				}
-	//			})
-	//		}
-	//	}
-	//})
+	req := request.NewRequest("http://m.ivoix.cn/nav")
+	response, err := centipede.Downloader(req)
+
+	if err != nil {
+		centipede.Log.Errorln("nav", err)
+	}
+
+	doc, err := goquery.NewDocumentFromResponse(response)
+
+	if err != nil {
+		centipede.Log.Errorln("NewDocumentFromResponse", err)
+	}
+
+	doc.Find(".bookList div").Each(func(i int, selection *goquery.Selection) {
+
+		if dataRole, ok := selection.Attr("data-role"); ok {
+			if dataRole == "collapsible" {
+
+				selection.Find("li a").Each(func(i int, selection *goquery.Selection) {
+
+					if href, exist := selection.Attr("href"); exist {
+						fmt.Println(siteUrl + href)
+
+						req := request.NewRequest(siteUrl + href).SetCallback("ParseFenUrl")
+						centipede.AddRequest(req)
+
+						upsetMongo(bson.M{"name": selection.Text()}, map[string]interface{}{
+							"name": selection.Text(),
+						}, "category")
+					}
+				})
+			}
+		}
+	})
 
 }
 
