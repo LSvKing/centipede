@@ -86,6 +86,24 @@
   revision = "69c27309b2d751c576b59ea9c3726597c2375da3"
 
 [[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mgutz/ansi"
+  packages = ["."]
+  revision = "9520e82c474b0a04dd04f8a40959027271bab992"
+
+[[projects]]
   branch = "master"
   name = "github.com/nanobox-io/golang-scribble"
   packages = ["."]
@@ -96,6 +114,12 @@
   packages = ["."]
   revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
   version = "v1.0.4"
+
+[[projects]]
+  name = "github.com/x-cray/logrus-prefixed-formatter"
+  packages = ["."]
+  revision = "bb2702d423886830dee131692131d35648c382e2"
+  version = "v0.5.2"
 
 [[projects]]
   branch = "master"
@@ -142,6 +166,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8675cc765a3b5ff622a9cbb2a24d41aafe92e49885b7f86e2ffd907901575a48"
+  inputs-digest = "338c2926043ce84d26b008ea3a7c95e9437777a62c39321a3891ac820f883226"
   solver-name = "gps-cdcl"
   solver-version = 1
