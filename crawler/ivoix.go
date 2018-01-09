@@ -216,9 +216,9 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 	}
 
 	//存在且没有更新便跳过
-	if !checkBookUpdate(bookID, count) {
-		return
-	}
+	//if !checkBookUpdate(bookID, count) {
+	//	return
+	//}
 
 	title := info.Find("h3").Text()
 
