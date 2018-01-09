@@ -253,7 +253,10 @@ func (this *Ivoix) ParseBookList(response *http.Response, params map[string]stri
 		"count":       count,
 	}
 
-	upsetMongo(bson.M{"bookId": bookID}, p, "book")
+	//临时处理
+	if checkBookUpdate(bookID, count) {
+		upsetMongo(bson.M{"bookId": bookID}, p, "book")
+	}
 
 	if image != "null" {
 		reqCover := request.NewRequest(image).SetCallback("DownloadCover").AddCallParam("bookId", bookID)
