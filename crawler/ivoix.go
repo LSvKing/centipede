@@ -111,7 +111,7 @@ func (this *Ivoix) ParseReDo() {
 
 	db := session.DB(appConfig.Mongo.Database)
 
-	c := db.C("audio")
+	c := db.C("audio_0206")
 
 	iter := c.Find(bson.M{"path": path}).Iter()
 
