@@ -57,7 +57,7 @@ func init() {
 			Name:         "Ivoix",
 			Thread:       10,
 			Limit:        10,
-			DisableProxy: false,
+			DisableProxy: true,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
 				{
