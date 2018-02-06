@@ -57,7 +57,7 @@ func init() {
 			Name:         "Ivoix",
 			Thread:       10,
 			Limit:        10,
-			DisableProxy: true,
+			DisableProxy: false,
 			Timeout:      time.Minute * 4,
 			ProxyList: []items.Proxy{
 				{
@@ -93,7 +93,7 @@ ReGoto:
 }
 
 func (this *Ivoix) Parse(params map[string]string) {
-	this.ParseUrl()
+	this.ParseReDo()
 }
 
 func (this *Ivoix) Option() items.Crawler {
@@ -101,6 +101,22 @@ func (this *Ivoix) Option() items.Crawler {
 }
 
 func (this *Ivoix) Pipeline(data items.DataRow) {
+}
+
+func (this *Ivoix) ParseReDo() {
+	path := "/uc2.asp?act=mine&mt=zf"
+
+	session := mg.AcquireSession()
+	defer session.Release()
+
+	db := session.DB(appConfig.Mongo.Database)
+
+	c := db.C("audio")
+
+	f, _ := c.Find(bson.M{"path": path}).Count()
+
+	fmt.Println(f)
+
 }
 
 func (this *Ivoix) ParseUrl() {
@@ -343,7 +359,7 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 	//
 	//mUrl := downUrl + filePath
 
-	//req := request.NewRequest(mUrl).SetCallback("DownloadMp3").AddCallParams(params)
+	//req :=          request.NewRequest(mUrl).SetCallback("DownloadMp3").AddCallParams(params)
 
 	//req.CallParams = params
 
