@@ -356,17 +356,18 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 		req.ReTry += 1
 
 		centipede.AddRequest(req)
-	}
+	} else {
 
-	p := map[string]interface{}{
-		"bookId":     params["bookId"],
-		"name":       params["name"],
-		"aid":        params["aid"],
-		"path":       filePath,
-		"updateTime": time.Now(),
-	}
+		p := map[string]interface{}{
+			"bookId":     params["bookId"],
+			"name":       params["name"],
+			"aid":        params["aid"],
+			"path":       filePath,
+			"updateTime": time.Now(),
+		}
 
-	upsetMongo(bson.M{"aid": params["aid"]}, p, "audio")
+		upsetMongo(bson.M{"aid": params["aid"]}, p, "audio")
+	}
 
 	//
 	//mUrl := downUrl + filePath
