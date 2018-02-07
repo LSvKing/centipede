@@ -348,7 +348,7 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 		centipede.Log.Errorln("error : (filePath) > 200", filePath)
 
 		req := request.NewRequest(mp3Url).SetMethod("POST").
-			AddHeader("Cookie", "ASPSESSIONIDCCQBCACB=COPINMMCPFMCOJIMCFPOMKLP; safedog-flow-item=; apwd=lsv324000; userid=427475; aname=13264180593").
+			AddHeader("Cookie", "ASPSESSIONIDCSATSDTB=MEPJAFHAMHEBHGLFNHNKKMAF; safedog-flow-item=; AJSTAT_ok_times=1; __51cke__=; Hm_lvt_a219374f7c5b5e96e18810c4ebeedd06=1517966667; apwd=lsv324000; userid=427475; aname=13264180593; AJSTAT_ok_pages=2; __tins__16284519=%7B%22sid%22%3A%201517966666594%2C%20%22vd%22%3A%202%2C%20%22expires%22%3A%201517968478436%7D; __51laig__=2; Hm_lpvt_a219374f7c5b5e96e18810c4ebeedd06=1517966678").
 			AddPostParam("aid", params["aid"]).AddPostParam("uname", "lsvking").AddCallParam("aid", params["aid"]).AddCallParams(params).AddCallParam("name", params["name"]).
 			SetCallback("ParseMp3")
 
