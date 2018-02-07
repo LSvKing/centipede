@@ -344,7 +344,8 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 	filePath := string(bodyBytes)
 
 	centipede.Log.Debugln(filePath)
-	if len(filePath) > 200 {
+
+	if len(filePath) > 200 || filePath == "<!doctype html>\n<html>\n  <head>\n    <title>503 Service Unavailable</title>\n  </head>\n  <body>\n    <h1>503 Service Unavailable</h1>\n    <h3>An error occurred.</h3>\n    <p>Sorry, the resouce you are looking for is currently unavailable.<br/>Please try again later.</p>\n    <hr />\n    <address><a href=\"https://www.abuyun.com/\">abuyun</a></address>\n  </body>\n</html>\n" {
 		centipede.Log.Errorln("error : (filePath) > 200", filePath)
 
 		req := request.NewRequest(mp3Url).SetMethod("POST").
