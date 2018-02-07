@@ -343,6 +343,7 @@ func (this *Ivoix) ParseMp3(response *http.Response, params map[string]string) {
 
 	filePath := string(bodyBytes)
 
+	centipede.Log.Debugln(filePath)
 	if len(filePath) > 200 {
 		centipede.Log.Errorln("error : (filePath) > 200", filePath)
 
