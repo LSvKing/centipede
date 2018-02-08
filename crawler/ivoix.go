@@ -93,7 +93,7 @@ ReGoto:
 }
 
 func (this *Ivoix) Parse(params map[string]string) {
-	this.ParseUrl()
+	this.ParseReDo()
 }
 
 func (this *Ivoix) Option() items.Crawler {
@@ -111,7 +111,7 @@ func (this *Ivoix) ParseReDo() {
 
 	db := session.DB(appConfig.Mongo.Database)
 
-	c := db.C("audio_0206")
+	c := db.C("audio")
 
 	iter := c.Find(bson.M{"path": path}).Iter()
 
